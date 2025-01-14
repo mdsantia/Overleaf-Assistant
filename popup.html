@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Overleaf Helper</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #fafbfc; /* Slightly off-white background */
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100%;
+      width: 250px;
+      box-sizing: border-box;
+    }
+
+    h3 {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin: 5px 0;
+    }
+
+    p {
+      font-size: 10px;
+      color: #777;
+      text-align: center;
+      margin-bottom: 2px;
+    }
+
+    .project-list {
+      width: 100%;
+      max-height: 250px;
+      overflow-y: auto;
+      margin-bottom: 2px;
+    }
+
+    .project-item {
+      background-color: #ffffff;
+      padding: 12px;
+      margin: 2px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.3s ease;
+    }
+
+    .project-item:hover {
+      background-color: #f7f8fa;
+    }
+
+    .project-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+    }
+
+    .close-button {
+        background: none;
+        border: none;
+        color: black;
+        font-size: 12px; /* Adjusted font size */
+        cursor: pointer;
+        padding: 0;
+        margin: 0;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        font-weight: bold;
+    }
+
+
+    .close-button:hover {
+      color: #ff0000;
+    }
+
+    .footer {
+      font-size: 6px;
+      color: #999;
+      margin-top: 4px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h3>Overleaf Helper</h3>
+  <p>Manage local saving for your projects:</p>
+  
+  <div class="project-list" id="projectList"></div>
+
+  <button id="closeButton" class="close-button">&times;</button>
+  
+  <div class="footer">
+    <p>Overleaf Helper v1.0</p>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
