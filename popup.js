@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
       for (const projectId in projectStates) {
         if (projectStates.hasOwnProperty(projectId)) {
           const projectState = projectStates[projectId];
-          const projectName = projectState.name || "Unnamed Project"; // Use the project name stored in state or a default name
+          const projectName = projectState.name; // Use the project name stored in state
 
           // Create the project item element
           const projectItem = document.createElement("div");
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Create the project name element
           const projectNameElement = document.createElement("span");
-          projectNameElement.textContent = `Project ${projectName}`; // Display project name
+          projectNameElement.textContent = `${projectName}`; // Display project name
 
           // Create the checkbox input
           const checkbox = document.createElement("input");
@@ -57,3 +57,32 @@ document.addEventListener('DOMContentLoaded', () => {
     window.close(); // Close the popup
   });
 });
+
+function handleProjectTabOpening(projectId) {
+  // Get all tabs currently open in the browser
+  chrome.tabs.query({}, function(tabs) {
+      tabs.forEach(function(tab) {
+          // Check if the tab URL matches the Overleaf project URL pattern
+          if (tab.url && isOverleafProjectUrl(tab.url)) {
+              // Extract project ID from the tab URL
+              const tabProjectId = getProjectIdFromUrl(tab.url);
+              
+              // If the project ID matches the one we are looking for, reload the tab
+              if (tabProjectId === projectId) {
+                  chrome.tabs.reload(tab.id);
+              }
+          }
+      });
+  });
+}
+
+// Function to check if a URL is an Overleaf project URL
+function isOverleafProjectUrl(url) {
+  return /https:\/\/www\.overleaf\.com\/project\/[\w-]+/.test(url);
+}
+
+// Function to extract project ID from an Overleaf project URL
+function getProjectIdFromUrl(url) {
+  const match = url && url.match(/https:\/\/www\.overleaf\.com\/project\/([\w-]+)/);
+  return match ? match[1] : null;
+}

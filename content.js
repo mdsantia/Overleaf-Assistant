@@ -61,18 +61,13 @@
 
   // Handling project-specific state
   const projectId = getProjectIdFromUrl(window.location.href);
-  const projectName = "Unnamed";
 
-  if (projectId && projectName) {
+  if (projectId) {
     chrome.storage.local.get(["projectStates"], (data) => {
       const projectStates = data.projectStates || {};
       const isSavingEnabled = projectStates[projectId] ? projectStates[projectId].state : false;
 
-      if (isSavingEnabled) {
-        saveIcon.style.opacity = "1";
-      } else {
-        saveIcon.style.opacity = "0.5";
-      }
+      saveIcon.style.opacity = isSavingEnabled ? "1" : "0.5";
     });
 
     saveIcon.addEventListener("click", () => {
@@ -80,10 +75,15 @@
         const projectStates = data.projectStates || {};
         const isSavingEnabled = projectStates[projectId] ? projectStates[projectId].state : false;
         const newState = !isSavingEnabled;
+
+        const projectNameElement = document.querySelector('#ide-root > div.ide-react-main > header > div.project-name.toolbar-center > span.name');
+
+        const projectName = projectNameElement.textContent.trim();
         
         projectStates[projectId] = { name: projectName, state: newState };
 
         chrome.storage.local.set({ projectStates }, () => {
+          console.log(`Saving ${projectStates[projectId].state ? "enabled" : "disabled"} for project ${projectId}.`);
           saveIcon.style.opacity = newState ? "1" : "0.5";
         });
       });

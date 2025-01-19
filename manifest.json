@@ -4,12 +4,14 @@
   "manifest_version": 3,
   "permissions": ["activeTab", "scripting", "commands", "storage"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://www.overleaf.com/project/*"],
-      "js": ["content.js"]
+      "js": ["content.js"],
+      "type": "module"
     }
   ],
   "commands": {
@@ -34,20 +36,13 @@
       },
       "description": "Move to the previous option"
     },
-    "toggle-saving": {
+    "_execute_action": {
       "suggested_key": {
-        "default": "Ctrl+Shift+S",
-        "mac": "Command+Shift+S"
+        "default": "Ctrl+Shift+E",
+        "mac": "Command+Shift+E"
       },
-      "description": "Toggle local saving"
+      "description": "Activate the extension"
     }
-  },
-  "_execute_action": {
-    "suggested_key": {
-      "default": "Ctrl+Shift+E",
-      "mac": "Command+Shift+E"
-    },
-    "description": "Activate the extension"
   },
   "action": {
     "default_popup": "popup.html",

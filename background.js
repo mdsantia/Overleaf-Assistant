@@ -3,45 +3,6 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 
 chrome.commands.onCommand.addListener((command) => {
-    // Listen if it's the save command Command + Shift + S
-    if (command === "toggle-saving") {
-        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-            const tab = tabs[0];
-
-            // Ensure the tab has a URL before proceeding
-            if (tab && tab.url) {
-                const projectId = getProjectIdFromUrl(tab.url);
-
-                if (projectId) {
-                    chrome.storage.local.get(["projectStates"], (data) => {
-                        const projectStates = data.projectStates || {};
-                        const isSavingEnabled = projectStates[projectId] || false;
-
-                        // Toggle saving state
-                        projectStates[projectId] = !isSavingEnabled;
-                        chrome.storage.local.set({ projectStates }, () => {
-                            console.log(`Saving ${projectStates[projectId] ? "enabled" : "disabled"} for project ${projectId}.`);
-                            
-                            // Enable or disable the extension icon based on the saving state
-                            if (projectStates[projectId]) {
-                                chrome.action.enable(tab.id);
-                                chrome.action.setIcon({ path: "icons/icon-16.png" });  // Set icon manually when saving is enabled
-                            } else {
-                                chrome.action.disable(tab.id);
-                            }
-                            chrome.tabs.reload(tab.id);
-                        });
-                    });
-                } else {
-                    console.error("Project ID not found in URL.");
-                }
-            } else {
-                console.error("Tab URL is undefined or invalid.");
-            }
-        });
-        return;
-    }
-
     // Handle other commands like toggle file tree or layout options
     let functionName;
     if (command === "open-files") {
@@ -160,45 +121,5 @@ function toggleFileTree() {
         }
     } else {
         console.error("Dropdown menu not found.");
-    }
-}
-
-
-
-// SAVING BACKGROUND PROCESS
-
-// Helper function to extract project ID from Overleaf URL
-function getProjectIdFromUrl(url) {
-    // Match the Overleaf project URL and extract the project ID
-    const match = url && url.match(/https:\/\/www\.overleaf\.com\/project\/([\w-]+)/);
-    return match ? match[1] : null;
-  }
-
-// Helper function to focus next
-function focusNextElement() {
-    // Get all focusable elements on the page
-    const focusableSelectors = [
-        'a[href]',
-        'button',
-        'textarea',
-        'input',
-        'select',
-        '[tabindex]:not([tabindex="-1"])'
-    ];
-    const focusableElements = Array.from(document.querySelectorAll(focusableSelectors.join(',')))
-        .filter(el => !el.hasAttribute('disabled') && el.offsetParent !== null);
-
-    // Find the currently focused element
-    const currentIndex = focusableElements.indexOf(document.activeElement);
-
-    // Calculate the next index (looping back to the start if necessary)
-    const nextIndex = (currentIndex + 1) % focusableElements.length;
-
-    // Focus the next element
-    if (focusableElements[nextIndex]) {
-        focusableElements[nextIndex].focus();
-        console.log("Moved focus to the next element.");
-    } else {
-        console.error("No focusable element found.");
     }
 }
