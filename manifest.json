@@ -2,7 +2,13 @@
   "name": "Overleaf Helper",
   "version": "1.0",
   "manifest_version": 3,
-  "permissions": ["activeTab", "scripting", "commands", "storage"],
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "commands",
+    "storage",
+    "fileSystem"
+  ],
   "background": {
     "service_worker": "background.js",
     "type": "module"
