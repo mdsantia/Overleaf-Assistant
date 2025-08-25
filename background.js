@@ -59,7 +59,7 @@ function toggleFileTree() {
     }
 
     // Find the dropdown menu
-    const dropdownMenu = document.querySelector('#ide-root > div.ide-react-main > header > div.toolbar-right > div.toolbar-item.layout-dropdown.dropdown > ul');
+    const dropdownMenu = document.querySelector('#ide-root > div.ide-react-main > nav > div.toolbar-right > div.toolbar-item.layout-dropdown.dropdown > ul');
     
     if (dropdownMenu) {
         // Get all menu items (Options)

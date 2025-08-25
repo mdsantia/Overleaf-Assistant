@@ -76,7 +76,7 @@
         const isSavingEnabled = projectStates[projectId] ? projectStates[projectId].state : false;
         const newState = !isSavingEnabled;
 
-        const projectNameElement = document.querySelector('#ide-root > div.ide-react-main > header > div.project-name.toolbar-center > span.name');
+        const projectNameElement = document.querySelector('#ide-root > div.ide-react-main > nav > div.project-name.toolbar-center > span');
 
         const projectName = projectNameElement.textContent.trim();
         

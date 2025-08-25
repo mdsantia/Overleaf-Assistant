@@ -118,11 +118,23 @@ document.addEventListener('DOMContentLoaded', () => {
               projectItem.remove();
             });
           });
-  
+
+          // Create PDF button
+          const pdfButton = document.createElement("button");
+          pdfButton.innerHTML = "📄";  // or use an SVG/icon if you prefer
+          pdfButton.classList.add("pdf-button");
+          pdfButton.title = "Open PDF Viewer";
+          pdfButton.addEventListener("click", (event) => {
+            event.stopPropagation();  // Don’t trigger the main project open
+            const pdfUrl = `https://www.overleaf.com/project/${projectId}/output/output.pdf`;
+            chrome.tabs.create({ url: pdfUrl });
+          });
+          
           // Append elements
           projectItem.appendChild(checkbox);
           projectItem.appendChild(projectNameContainer);
           projectItem.appendChild(deleteButton);
+          projectItem.appendChild(pdfButton);
           projectListContainer.appendChild(projectItem);
         }
       }
