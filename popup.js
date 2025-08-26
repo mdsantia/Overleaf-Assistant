@@ -145,6 +145,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById("closeButton").addEventListener("click", () => {
     window.close(); // Close the popup
   });
+
+  document.getElementById("openOverleafLink").addEventListener("click", function () {
+    chrome.tabs.create({ url: "https://www.overleaf.com/project" });
+  });  
 });
 
 function handleProjectTabOpening(projectId) {
