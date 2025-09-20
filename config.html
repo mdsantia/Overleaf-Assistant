@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Overleaf Helper Configuration</title>
+  <script src="config.js" type="module" defer></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      height: 100vh;
+      background-color: #fff;
+      color: #111;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 220px;
+      background-color: #1a1a1a; /* dark black */
+      color: #eee;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      overflow-y: auto;
+    }
+
+    .sidebar h3 {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: #bbb;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .project-link {
+      padding: 8px 10px;
+      margin: 2px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+      font-size: 13px;
+      color: #ddd;
+    }
+
+    .project-link:hover {
+      background-color: #333;
+    }
+
+    .project-link.active {
+      background-color: #555;
+      color: #fff;
+    }
+
+    /* Main section */
+    .main {
+      flex: 1;
+      padding: 24px;
+      background-color: #fff;
+      overflow-y: auto;
+    }
+
+    .config-section {
+      max-width: 640px;
+      margin: auto;
+    }
+
+    .config-section h2 {
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      color: #111;
+    }
+
+    .config-section label {
+      display: block;
+      margin: 16px 0 6px;
+      font-weight: 500;
+      color: #222;
+    }
+
+    .config-section input[type="text"],
+    .config-section input[type="checkbox"] {
+      margin-bottom: 12px;
+    }
+
+    .config-section input[type="text"] {
+      width: 100%;
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 14px;
+    }
+
+    .save-button {
+      margin-top: 20px;
+      padding: 8px 16px;
+      font-size: 14px;
+      background-color: #111;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .save-button:hover {
+      background-color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h3>Projects</h3>
+    <div id="projectList"></div>
+  </div>
+
+  <div class="main">
+    <div class="config-section" id="configSection">
+      <h2>Select a project</h2>
+      <p style="color: #555;">Click on a project from the sidebar to configure it.</p>
+    </div>
+  </div>
+</body>
+</html>

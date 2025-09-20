@@ -94,11 +94,11 @@ document.addEventListener('DOMContentLoaded', () => {
           // Create checkbox
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
-          checkbox.checked = projectState.state || false;
+          checkbox.checked = projectState.autoSave || false;
           checkbox.style.marginRight = "8px";
           checkbox.addEventListener("click", (event) => {
             event.stopPropagation();  // Prevent row click from opening the link
-            projectStates[projectId].state = checkbox.checked;
+            projectStates[projectId].autoSave = checkbox.checked;
             chrome.storage.local.set({ projectStates });
           });
   
@@ -130,11 +130,22 @@ document.addEventListener('DOMContentLoaded', () => {
             chrome.tabs.create({ url: pdfUrl });
           });
           
-          // Append elements
+          // ⚙️ Config button
+          const configButton = document.createElement("button");
+          configButton.innerHTML = "⚙️";
+          configButton.classList.add("config-button");
+          configButton.title = "Configure Project";
+          configButton.addEventListener("click", (event) => {
+            event.stopPropagation();
+            chrome.tabs.create({ url: chrome.runtime.getURL(`config.html?projectId=${projectId}`) });
+          });
+          
+          // Append everything
           projectItem.appendChild(checkbox);
           projectItem.appendChild(projectNameContainer);
           projectItem.appendChild(deleteButton);
           projectItem.appendChild(pdfButton);
+          projectItem.appendChild(configButton);
           projectListContainer.appendChild(projectItem);
         }
       }

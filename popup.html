@@ -4,37 +4,38 @@
   <title>Overleaf Helper Extension</title>
   <script src="popup.js" type="module"></script>
   <style>
-    .trash-button {
+    .trash-button,
+    .pdf-button,
+    .config-button {
       background: none;
       border: none;
       cursor: pointer;
       font-size: 14px;
-      color: red;
       opacity: 0;
       transition: opacity 0.2s ease-in-out;
     }
 
-    .project-item:hover .trash-button {
-      opacity: 1;
+    .trash-button {
+      color: red;
     }
 
     .pdf-button {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 14px;
       color: #007bff;
-      opacity: 0;
-      transition: opacity 0.2s ease-in-out;
     }
 
-    .project-item:hover .pdf-button {
+    .config-button {
+      color: #28a745; /* green gear */
+    }
+
+    .project-item:hover .trash-button,
+    .project-item:hover .pdf-button,
+    .project-item:hover .config-button {
       opacity: 1;
     }
+
     .project-item.drag-over {
       border: 2px dashed #aaa;
     }
-
 
     body {
       font-family: 'Arial', sans-serif;
@@ -94,17 +95,17 @@
     }
 
     .close-button {
-        background: none;
-        border: none;
-        color: black;
-        font-size: 12px;
-        cursor: pointer;
-        padding: 0;
-        margin: 0;
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        font-weight: bold;
+      background: none;
+      border: none;
+      color: black;
+      font-size: 12px;
+      cursor: pointer;
+      padding: 0;
+      margin: 0;
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-weight: bold;
     }
 
     .close-button:hover {
@@ -148,23 +149,32 @@
   
   <!-- Folder selection section -->
   <div class="folder-selection">
-    <!-- <span>Selected folder: </span> -->
     <button id="selectFolderButton">Selected folder:</button>
     <span id="folderName">None</span>
     <input type="file" id="folderInput" webkitdirectory directory style="display: none;" />
-
-    <!-- Link to Overleaf Projects -->      
   </div>
+  
+  <!-- Link to Overleaf Projects -->      
   <div class="overleaf-link">
     <a href="#" id="openOverleafLink">Your Overleaf Projects</a>
   </div>
 
-  <div class="project-list" id="projectList"></div>
+  <div class="project-list" id="projectList">
+    <!-- Example item -->
+    <div class="project-item">
+      <span>Project Name</span>
+      <div>
+        <button class="pdf-button">📄</button>
+        <button class="config-button">⚙️</button>
+        <button class="trash-button">🗑️</button>
+      </div>
+    </div>
+  </div>
 
   <button id="closeButton" class="close-button">&times;</button>
   
   <div class="footer">
-    <p>Overleaf Helper v1.8</p>
+    <p>Overleaf Helper v1.8.1</p>
   </div>
 </body>
 </html>
