@@ -32,6 +32,83 @@
       letter-spacing: 1px;
     }
 
+    .sidebar-section {
+      margin-bottom: 12px;
+    }
+
+    .sidebar-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      padding: 6px 0;
+    }
+
+    .sidebar-header h3 {
+      margin: 0;
+      font-size: 13px;
+      color: #bbb;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .sidebar-header button {
+      background: none;
+      border: none;
+      color: #bbb;
+      cursor: pointer;
+      font-size: 14px;
+      margin-left: 6px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+
+    .sidebar-header button:hover {
+      background: #333;
+      color: #fff;
+    }
+
+    .sidebar-content {
+      display: none;
+      margin-top: 6px;
+    }
+
+    .sidebar-content.open {
+      display: block;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid #333;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .sidebar-footer button {
+      flex: 1;
+      margin: 0 2px;
+      padding: 6px;
+      font-size: 12px;
+      background-color: #222;
+      color: #eee;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .sidebar-footer button:hover {
+      background-color: #444;
+    }
+
+    .project-link {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+
     .project-link {
       padding: 8px 10px;
       margin: 2px 0;
@@ -108,17 +185,41 @@
     }
   </style>
 </head>
-<body>
-  <div class="sidebar">
-    <h3>Projects</h3>
-    <div id="projectList"></div>
-  </div>
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-header" data-toggle="projects">
+          <h3>Projects</h3>
+        </div>
+        <div class="sidebar-content" id="config-projectList"></div>
+      </div>
 
-  <div class="main">
-    <div class="config-section" id="configSection">
-      <h2>Select a project</h2>
-      <p style="color: #555;">Click on a project from the sidebar to configure it.</p>
+      <div class="sidebar-section">
+        <div class="sidebar-header" data-toggle="templates">
+          <h3>Templates</h3>
+          <button id="addTemplateBtn" title="Add Template">+</button>
+        </div>
+        <div class="sidebar-content" id="templateList"></div>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="sidebar-header" data-toggle="archived">
+          <h3>Archived</h3>
+        </div>
+        <div class="sidebar-content" id="archivedList"></div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="exportBtn">Export</button>
+        <button id="importBtn">Import</button>
+      </div>
     </div>
-  </div>
-</body>
+
+    <div class="main">
+      <div class="config-section" id="configSection">
+        <h2>Select an item</h2>
+        <p style="color: #555;">Click on a project, template, or archive entry.</p>
+      </div>
+    </div>
+  </body>
 </html>

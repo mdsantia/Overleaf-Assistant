@@ -56,26 +56,31 @@
 
     // Click handler
     saveIcon.addEventListener("click", () => {
-      chrome.storage.local.get(["projectStates"], (data) => {
-        const projectStates = data.projectStates || {};
-        const project = projectStates[projectId] || {};
-
+      chrome.storage.local.get(["popProjects", "configProjects"], (data) => {
+        const popProjects = data.popProjects || {};
+        const configProjects = data.configProjects || {};
+        const project = popProjects[projectId] || {};
+        
         const new_autosave = !project.autoSave; // toggle
-
+        
         const projectNameElement = document.querySelector(
           '#ide-root > div.ide-react-main > nav > div.project-name.toolbar-center > span'
-        );
-        const projectName = projectNameElement
+          );
+          const projectName = projectNameElement
           ? projectNameElement.textContent.trim()
           : "Untitled Project";
+          
+          popProjects[projectId] = {
+            name: projectName,
+            autoSave: new_autosave,
+          };
+        
+          configProjects[projectId] = {
+            name: projectName
+          };
 
-        projectStates[projectId] = {
-          name: projectName,
-          autoSave: new_autosave,
-        };
-
-        chrome.storage.local.set({ projectStates }, () => {
-          console.log(
+          chrome.storage.local.set({ popProjects: popProjects, configProjects: configProjects }, () => {
+              console.log(
             `Saving ${new_autosave ? "enabled" : "disabled"} for project ${projectId}.`
           );
           // Recreate the icon with updated state
@@ -93,9 +98,9 @@
   const projectId = getProjectIdFromUrl(window.location.href);
 
   if (projectId) {
-    chrome.storage.local.get(["projectStates"], (data) => {
-      const projectStates = data.projectStates || {};
-      const project = projectStates[projectId] || {};
+    chrome.storage.local.get("popProjects", (data) => {
+      const popProjects = data.popProjects || {};
+      const project = popProjects[projectId] || {};
       const isSavingEnabled = project.autoSave || false;
 
       createSaveIcon(projectId, isSavingEnabled);

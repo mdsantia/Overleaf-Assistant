@@ -64,20 +64,20 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Retrieve and display project data as in your original code
-  chrome.storage.local.get("projectStates", (data) => {
-    const projectStates = data.projectStates || {};  
-    const projectListContainer = document.getElementById("projectList");
+  chrome.storage.local.get("popProjects", (data) => {
+    const popProjects = data.popProjects || {};  
+    const projectListContainer = document.getElementById("pop-projectList");
     projectListContainer.innerHTML = "";  
   
-    if (Object.keys(projectStates).length === 0) {
+    if (Object.keys(popProjects).length === 0) {
       const noProjectsMessage = document.createElement("p");
       noProjectsMessage.textContent = "No projects found.";
       projectListContainer.appendChild(noProjectsMessage);
     } else {
-      for (const projectId in projectStates) {
-        if (projectStates.hasOwnProperty(projectId)) {
-          const projectState = projectStates[projectId];
-          const projectName = projectState.name;
+      for (const projectId in popProjects) {
+        if (popProjects.hasOwnProperty(projectId)) {
+          const popProject = popProjects[projectId];
+          const projectName = popProject.name;
   
           // Create the project item element
           const projectItem = document.createElement("div");
@@ -94,12 +94,12 @@ document.addEventListener('DOMContentLoaded', () => {
           // Create checkbox
           const checkbox = document.createElement("input");
           checkbox.type = "checkbox";
-          checkbox.checked = projectState.autoSave || false;
+          checkbox.checked = popProject.autoSave || false;
           checkbox.style.marginRight = "8px";
           checkbox.addEventListener("click", (event) => {
             event.stopPropagation();  // Prevent row click from opening the link
-            projectStates[projectId].autoSave = checkbox.checked;
-            chrome.storage.local.set({ projectStates });
+            popProjects[projectId].autoSave = checkbox.checked;
+            chrome.storage.local.set({ popProjects });
           });
   
           // Create project name container (clickable)
@@ -113,8 +113,8 @@ document.addEventListener('DOMContentLoaded', () => {
           deleteButton.classList.add("trash-button");
           deleteButton.addEventListener("click", (event) => {
             event.stopPropagation();  // Prevent row click from opening the link
-            delete projectStates[projectId];
-            chrome.storage.local.set({ projectStates }, () => {
+            delete popProjects[projectId];
+            chrome.storage.local.set({ popProjects }, () => {
               projectItem.remove();
             });
           });
