@@ -1,0 +1,194 @@
+body {
+  margin: 0;
+  font-family: "Helvetica Neue", Arial, sans-serif;
+  display: flex;
+  height: 100vh;
+  background-color: #fff;
+  color: #111;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background-color: #1a1a1a;
+  color: #eee;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar h3 {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sidebar-section {
+  margin-bottom: 12px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 13px;
+  color: #bbb;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.sidebar-header button {
+  background: none;
+  border: none;
+  color: #bbb;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 6px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.sidebar-header button:hover {
+  background: #333;
+  color: #fff;
+}
+
+.sidebar-content {
+  display: none;
+  margin-top: 6px;
+}
+
+.sidebar-content.open {
+  display: block;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+}
+
+.sidebar-footer button {
+  flex: 1;
+  margin: 0 2px;
+  padding: 6px;
+  font-size: 12px;
+  background-color: #222;
+  color: #eee;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.sidebar-footer button:hover {
+  background-color: #444;
+}
+
+.project-link {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 10px;
+  margin: 2px 0;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+  font-size: 13px;
+  color: #ddd;
+  user-select: none;
+}
+
+.project-link:hover {
+  background-color: #333;
+}
+
+.project-link .project-link-name {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Active/opened view highlight */
+.project-link.active {
+  background-color: #5a5a5a; /* visible grey */
+  color: #fff;
+  box-shadow: inset 4px 0 0 #8b8b8b; /* left indicator */
+  font-weight: 600;
+}
+
+/* Loading state while switching views */
+.project-link.loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Main */
+.main {
+  flex: 1;
+  padding: 24px;
+  background-color: #fff;
+  overflow-y: auto;
+}
+
+.config-section {
+  max-width: 640px;
+  margin: auto;
+}
+
+.config-section h2 {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 16px;
+  color: #111;
+}
+
+.config-section label {
+  display: block;
+  margin: 16px 0 6px;
+  font-weight: 500;
+  color: #222;
+}
+
+.config-section input[type="text"],
+.config-section textarea,
+.config-section input[type="checkbox"] {
+  margin-bottom: 12px;
+}
+
+.config-section input[type="text"],
+.config-section textarea {
+  width: 100%;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.save-button {
+  margin-top: 20px;
+  padding: 8px 16px;
+  font-size: 14px;
+  background-color: #111;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.save-button:hover {
+  background-color: #444;
+}

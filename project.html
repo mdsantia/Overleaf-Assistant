@@ -1,12 +1,29 @@
-<div class="config-section" id="projectConfigSection">
-  <h2 id="projectTitle">Project</h2>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Project Config</title>
+  <link rel="stylesheet" href="config.css">
+  <script src="project.js" type="module" defer></script>
+</head>
+<body>
+  <div class="main">
+    <div class="config-section" id="projectConfigSection">
+      <h2 id="projectTitle">Project</h2>
 
-  <label>
-    <input type="checkbox" id="projectAutoSave"> Enable Auto-Save
-  </label>
+      <label>
+        <input type="checkbox" id="projectAutoSave"> Enable Auto-Save
+      </label>
 
-  <label for="projectCustomNote">Custom Note:</label>
-  <input type="text" id="projectCustomNote" placeholder="Add a note for this project">
+      <label for="projectCustomNote">Custom Note:</label>
+      <input type="text" id="projectCustomNote">
 
-  <button class="save-button" id="saveProjectBtn">Save</button>
-</div>
+      <label for="projectTemplateSelect">Template:</label>
+      <select id="projectTemplateSelect"></select>
+
+      <div id="templateVars"></div>
+
+      <button class="save-button" id="saveProjectBtn">Save</button>
+    </div>
+  </div>
+</body>
+</html>

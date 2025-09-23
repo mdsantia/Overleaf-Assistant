@@ -1,328 +1,358 @@
-// config.js
-// Use module so we can import project/template modules if needed later.
+// sidebar.js (updated)
 
-function restoreSidebarState() {
-  // no-op / reserved for persistence later
+/////////////////////
+// storage helpers //
+/////////////////////
+function storageGet(keys) {
+  return new Promise((resolve) => chrome.storage.local.get(keys, resolve));
+}
+function storageSet(obj) {
+  return new Promise((resolve) => chrome.storage.local.set(obj, resolve));
 }
 
+let loadingView = false;
+let activeSelection = null; // { type, id }
+
 /* ----------------------------
-   Load a view fragment and initialize it
-   (fetch HTML fragment and then import the corresponding JS)
----------------------------- */
-async function loadView(type, id) {
-  const main = document.getElementById("main-view");
-  let url = "";
-  if (type === "project") url = "project.html";
-  if (type === "template") url = "template.html";
-  if (!url) return;
+   DOMContentLoaded (init)
+----------------------------- */
+document.addEventListener("DOMContentLoaded", async () => {
+  const params = new URLSearchParams(window.location.search);
+  const preselectProjectId = params.get("projectId");
+
+  // Render lists (await to keep ordering predictable)
+  await renderProjects(preselectProjectId);
+  await renderTemplates();
+  await renderArchived();
+
+  // Collapsible state should be wired after the content exists
+  setupCollapsibles();
+  await restoreSidebarState(); // apply stored open state
+
+  setupImportExport();
+
+  // buttons
+  const addTemplateBtn = document.getElementById("addTemplateBtn");
+  if (addTemplateBtn) {
+    addTemplateBtn.addEventListener("click", () => createNewTemplate());
+  }
+});
+
+////////////////////////////
+// Sidebar rendering APIs //
+////////////////////////////
+
+export async function renderProjects(preselectProjectId = null) {
+  const data = await storageGet("configProjects");
+  const projects = data.configProjects || {};
+  const projectListEl = document.getElementById("config-projectList");
+  if (!projectListEl) return;
+  projectListEl.innerHTML = "";
+
+  for (const projectId in projects) {
+    const project = projects[projectId];
+    const item = createSidebarItem(
+      project.name,
+      "project",
+      projectId,
+      async () => { await archiveProject(projectId, project); }
+    );
+    projectListEl.appendChild(item);
+  }
+
+  updateSidebarActiveClasses();
+
+  if (preselectProjectId && projects[preselectProjectId]) {
+    const el = document.querySelector(`.project-link[data-type="project"][data-id="${preselectProjectId}"]`);
+    await handleSelection("project", preselectProjectId, el);
+  }
+}
+
+export async function renderTemplates() {
+  const data = await storageGet("template");
+  const templates = data.template || {};
+  const templateListEl = document.getElementById("templateList");
+  if (!templateListEl) return;
+  templateListEl.innerHTML = "";
+
+  for (const templateId in templates) {
+    const template = templates[templateId];
+    const item = createSidebarItem(
+      template.name,
+      "template",
+      templateId,
+      null
+    );
+    templateListEl.appendChild(item);
+  }
+
+  updateSidebarActiveClasses();
+}
+
+export async function renderArchived() {
+  const data = await storageGet("archive");
+  const archived = data.archive || {};
+  const archivedListEl = document.getElementById("archivedList");
+  if (!archivedListEl) return;
+  archivedListEl.innerHTML = "";
+
+  for (const projectId in archived) {
+    const project = archived[projectId];
+    const item = createSidebarItem(
+      project.name,
+      "archived",
+      projectId,
+      async () => { await unarchiveProject(projectId, project); }
+    );
+    archivedListEl.appendChild(item);
+  }
+
+  updateSidebarActiveClasses();
+}
+
+///////////////////////////
+// Sidebar item factory //
+///////////////////////////
+function createSidebarItem(name, type, id, onSecondary) {
+  const container = document.createElement("div");
+  container.className = "project-link";
+  container.dataset.type = type;
+  container.dataset.id = id;
+
+  const span = document.createElement("span");
+  span.textContent = name;
+  span.className = "project-link-name";
+  container.appendChild(span);
+
+  // Primary click (open view)
+  container.addEventListener("click", (e) => {
+    // If button was clicked, ignore here — its own handler will run.
+    if (e.target.tagName === "BUTTON") return;
+    // handleSelection is async but we don't `await` here intentionally
+    // so clicks are responsive; handleSelection itself prevents overlap.
+    handleSelection(type, id, container);
+  });
+
+  if (onSecondary) {
+    const btn = document.createElement("button");
+    btn.textContent = "📦";
+    btn.style.marginLeft = "8px";
+    btn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      // allow secondary action to run, then re-render lists
+      await onSecondary();
+      await renderProjects();
+      await renderArchived();
+      // If the archived/unarchived item was the active one, clear it
+      if (activeSelection && activeSelection.type === type && activeSelection.id === id) {
+        activeSelection = null;
+        const main = document.querySelector(".main");
+        if (main) main.innerHTML = "";
+      }
+      updateSidebarActiveClasses();
+    });
+    container.appendChild(btn);
+  }
+
+  return container;
+}
+
+/////////////////////////
+// Selection & loading //
+/////////////////////////
+async function handleSelection(type, id, container = null) {
+  // If already loading, ignore additional requests
+  if (loadingView) return;
+
+  // If the clicked item is already active, just return (idempotent)
+  if (activeSelection && activeSelection.type === type && activeSelection.id === id) {
+    return;
+  }
+
+  loadingView = true;
+  if (container) container.classList.add("loading");
 
   try {
-    const res = await fetch(url);
-    const html = await res.text();
-    main.innerHTML = html;
-
-    if (type === "project") {
-      const { initProjectView } = await import("./project.js");
-      initProjectView(id);
-    } else if (type === "template") {
-      const { initTemplateView } = await import("./template.js");
-      initTemplateView(id, () => {
-        // after delete - return to default main view
-        renderAll();
-      });
-    }
+    await loadView(type, id);
+    activeSelection = { type, id };
+    updateSidebarActiveClasses();
   } catch (err) {
-    console.error("Failed loading view:", err);
+    console.error("Error loading view:", err);
+  } finally {
+    if (container) container.classList.remove("loading");
+    loadingView = false;
   }
 }
 
-/* ----------------------------
-   RENDER HELPERS
----------------------------- */
-function clearActiveIn(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.querySelectorAll(".sidebar-item").forEach(el => el.classList.remove("active"));
-}
-
-function createSidebarItem(text, onClick, secondaryEl = null) {
-  const item = document.createElement("div");
-  item.className = "sidebar-item";
-
-  const left = document.createElement("span");
-  left.textContent = text;
-  left.style.flex = "1";
-  item.appendChild(left);
-
-  if (secondaryEl) {
-    item.appendChild(secondaryEl);
-  }
-
-  item.addEventListener("click", (e) => {
-    // avoid the click from also triggering when user presses secondary button
-    if (e.target !== secondaryEl) {
-      onClick();
-      // visual active state
-      clearActiveIn("projects-list");
-      clearActiveIn("templates-list");
-      clearActiveIn("archived-list");
-      item.classList.add("active");
-    }
-  });
-
-  return item;
-}
-
-/* ----------------------------
-   Render lists from storage
----------------------------- */
-function renderProjects(preselectId, projects = {}) {
-  const container = document.getElementById("projects-list");
-  if (!container) return;
-  container.innerHTML = "";
-
-  const entries = Object.entries(projects || {});
-  if (entries.length === 0) {
-    const p = document.createElement("div");
-    p.className = "muted";
-    p.textContent = "No projects saved.";
-    container.appendChild(p);
-    return;
-  }
-
-  entries.forEach(([id, project]) => {
-    const archiveBtn = document.createElement("button");
-    archiveBtn.textContent = "📦";
-    archiveBtn.title = "Archive";
-    archiveBtn.style.marginLeft = "8px";
-    archiveBtn.onclick = (ev) => {
-      ev.stopPropagation();
-      archiveProject(id, project);
-    };
-
-    const item = createSidebarItem(project.name || "Untitled Project", () => loadView("project", id), archiveBtn);
-    container.appendChild(item);
-
-    if (preselectId && preselectId === id) {
-      // mark active and open
-      item.classList.add("active");
-      loadView("project", id);
+function updateSidebarActiveClasses() {
+  document.querySelectorAll(".project-link").forEach((el) => {
+    const t = el.dataset.type;
+    const i = el.dataset.id;
+    if (activeSelection && activeSelection.type === t && activeSelection.id === i) {
+      el.classList.add("active");
+    } else {
+      el.classList.remove("active");
     }
   });
 }
 
-function renderTemplates(templates = {}) {
-  const container = document.getElementById("templates-list");
-  if (!container) return;
-  container.innerHTML = "";
+//////////////////////////////
+// Archive / Unarchive APIs //
+//////////////////////////////
+async function archiveProject(projectId, project) {
+  const data = await storageGet(["configProjects", "archive"]);
+  const projects = data.configProjects || {};
+  const archived = data.archive || {};
+  archived[projectId] = project;
+  delete projects[projectId];
+  await storageSet({ configProjects: projects, archive: archived });
 
-  const entries = Object.entries(templates || {});
-  if (entries.length === 0) {
-    const p = document.createElement("div");
-    p.className = "muted";
-    p.textContent = "No templates saved.";
-    container.appendChild(p);
-    return;
+  // If the archived project was open, clear view
+  if (activeSelection && activeSelection.type === "project" && activeSelection.id === projectId) {
+    activeSelection = null;
+    const main = document.querySelector(".main");
+    if (main) main.innerHTML = "";
   }
 
-  entries.forEach(([id, tpl]) => {
-    const item = createSidebarItem(tpl.name || "Untitled Template", () => loadView("template", id));
-    container.appendChild(item);
-  });
-
-  // add-template is handled by its own button in HTML
+  await renderProjects();
+  await renderArchived();
 }
 
-function renderArchived(archived = {}) {
-  const container = document.getElementById("archived-list");
-  if (!container) return;
-  container.innerHTML = "";
+async function unarchiveProject(projectId, project) {
+  const data = await storageGet(["configProjects", "archive"]);
+  const projects = data.configProjects || {};
+  const archived = data.archive || {};
+  projects[projectId] = project;
+  delete archived[projectId];
+  await storageSet({ configProjects: projects, archive: archived });
 
-  const entries = Object.entries(archived || {});
-  if (entries.length === 0) {
-    const p = document.createElement("div");
-    p.className = "muted";
-    p.textContent = "No archived items.";
-    container.appendChild(p);
-    return;
-  }
-
-  entries.forEach(([id, entry]) => {
-    const unarchiveBtn = document.createElement("button");
-    unarchiveBtn.textContent = "↩";
-    unarchiveBtn.title = "Unarchive";
-    unarchiveBtn.onclick = (ev) => {
-      ev.stopPropagation();
-      unarchiveProject(id, entry);
-    };
-
-    const item = createSidebarItem(entry.name || "Untitled", () => loadView("project", id), unarchiveBtn);
-    container.appendChild(item);
-  });
+  await renderProjects();
+  await renderArchived();
 }
 
-/* ----------------------------
-   Archive/Unarchive
----------------------------- */
-function archiveProject(projectId, project) {
-  chrome.storage.local.get(["configProjects", "archive"], (data) => {
-    const projects = data.configProjects || {};
-    const archived = data.archive || {};
-
-    archived[projectId] = project;
-    delete projects[projectId];
-
-    chrome.storage.local.set({ configProjects: projects, archive: archived }, () => {
-      renderAll();
-      // if the archived project is currently open we reset main view
-      const main = document.getElementById("main-view");
-      main.innerHTML = `<div class="config-section"><h2>Item archived</h2><p class="muted">That project was archived.</p></div>`;
-    });
-  });
-}
-
-function unarchiveProject(projectId, project) {
-  chrome.storage.local.get(["configProjects", "archive"], (data) => {
-    const projects = data.configProjects || {};
-    const archived = data.archive || {};
-
-    projects[projectId] = project;
-    delete archived[projectId];
-
-    chrome.storage.local.set({ configProjects: projects, archive: archived }, () => {
-      renderAll();
-    });
-  });
-}
-
-/* ----------------------------
-   Import / Export - single handlers (no dupes)
----------------------------- */
+/////////////////////////////
+// Import / Export (kept) //
+/////////////////////////////
 function setupImportExport() {
-  const exportBtn = document.getElementById("export-btn");
-  const importBtn = document.getElementById("import-btn");
-  const addTemplateBtn = document.getElementById("add-template-btn");
+  const exportBtn = document.getElementById("exportBtn");
+  const importBtn = document.getElementById("importBtn");
 
-  // ensure we don't double attach — assign handlers directly
   if (exportBtn) {
-    exportBtn.onclick = () => {
-      // disable quickly to avoid double clicks while creating blob
-      exportBtn.disabled = true;
-      chrome.storage.local.get(null, (items) => {
-        const blob = new Blob([JSON.stringify(items, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "overleaf-helper-backup.json";
-        a.click();
-        URL.revokeObjectURL(url);
-        exportBtn.disabled = false;
-      });
+    exportBtn.onclick = async () => {
+      const data = await storageGet(["configProjects", "archive", "template"]);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "overleaf-helper-backup.json";
+      a.click();
+      URL.revokeObjectURL(url);
     };
   }
 
   if (importBtn) {
     importBtn.onclick = () => {
-      importBtn.disabled = true;
       const input = document.createElement("input");
       input.type = "file";
-      input.accept = ".json,application/json";
+      input.accept = ".json";
       input.onchange = async (e) => {
         const file = e.target.files[0];
-        if (!file) { importBtn.disabled = false; return; }
-        try {
-          const text = await file.text();
-          const importedData = JSON.parse(text);
+        if (!file) return;
+        const text = await file.text();
+        const importedData = JSON.parse(text);
 
-          // merge keys of interest
-          const keys = ["configProjects", "archive", "template"];
-          for (const key of keys) {
-            if (importedData[key]) {
-              chrome.storage.local.get([key], (existing) => {
-                const merged = { ...(existing[key] || {}), ...importedData[key] };
-                chrome.storage.local.set({ [key]: merged });
-              });
-            }
+        for (const key of ["configProjects", "archive", "template"]) {
+          if (importedData[key]) {
+            const existing = await storageGet(key);
+            const merged = { ...(existing[key] || {}), ...importedData[key] };
+            await storageSet({ [key]: merged });
           }
-
-          // small delay to ensure storage writes
-          setTimeout(() => {
-            renderAll();
-            importBtn.disabled = false;
-            alert("Data imported and merged successfully!");
-          }, 200);
-        } catch (err) {
-          console.error("Import error:", err);
-          importBtn.disabled = false;
-          alert("Import failed: invalid JSON");
         }
+        // re-render everything after import
+        await renderProjects();
+        await renderTemplates();
+        await renderArchived();
+        alert("Data imported successfully!");
       };
       input.click();
     };
   }
-
-  // add template btn
-  if (addTemplateBtn) {
-    addTemplateBtn.onclick = () => {
-      addTemplateBtn.disabled = true;
-      const id = `template-${Date.now()}`;
-      const newTemplate = { name: "New Template", content: "" };
-      chrome.storage.local.get(["template"], (data) => {
-        const templates = data.template || {};
-        templates[id] = newTemplate;
-        chrome.storage.local.set({ template: templates }, () => {
-          renderAll();
-          loadView("template", id);
-          addTemplateBtn.disabled = false;
-        });
-      });
-    };
-  }
 }
 
-/* ----------------------------
-   Collapsible behavior (visual only)
----------------------------- */
-function setupCollapsibles() {
-  document.querySelectorAll(".sidebar-header").forEach(header => {
-    header.onclick = () => {
-      const parent = header.closest(".sidebar-section");
-      parent.classList.toggle("collapsed");
-    };
+/////////////////////////////////
+// Collapsible sidebar support //
+/////////////////////////////////
+async function setupCollapsibles() {
+  const headers = document.querySelectorAll(".sidebar-header");
+  const data = await storageGet("sidebarState");
+  const state = data.sidebarState || {};
+  headers.forEach((header) => {
+    const key = header.dataset.toggle;
+    const content = header.nextElementSibling;
+    if (!content) return;
+    if (state[key]) content.classList.add("open");
+    header.addEventListener("click", () => {
+      content.classList.toggle("open");
+      state[key] = content.classList.contains("open");
+      chrome.storage.local.set({ sidebarState: state });
+    });
   });
 }
 
-/* ----------------------------
-   render everything from storage
----------------------------- */
-function renderAll(preselectProjectId) {
-  chrome.storage.local.get(["configProjects", "template", "archive"], (result) => {
-    const projects = result.configProjects || {};
-    const templates = result.template || {};
-    const archived = result.archive || {};
-
-    renderProjects(preselectProjectId, projects);
-    renderTemplates(templates);
-    renderArchived(archived);
-  });
+async function restoreSidebarState() {
+  const data = await storageGet("sidebarState");
+  const state = data.sidebarState || {};
+  for (const key in state) {
+    const header = document.querySelector(`.sidebar-header[data-toggle="${key}"]`);
+    const content = header ? header.nextElementSibling : null;
+    if (content && state[key]) {
+      content.classList.add("open");
+    }
+  }
 }
 
-/* ----------------------------
-   Init on load
----------------------------- */
-document.addEventListener("DOMContentLoaded", () => {
-  restoreSidebarState?.();
+//////////////////////////////
+// createNewTemplate helper //
+//////////////////////////////
+async function createNewTemplate() {
+  const id = `template-${Date.now()}`;
+  const newTemplate = { name: "New Template", content: "" };
 
-  const params = new URLSearchParams(window.location.search);
-  const preselectProjectId = params.get("projectId");
+  const data = await storageGet("template");
+  const templates = data.template || {};
+  templates[id] = newTemplate;
+  await storageSet({ template: templates });
 
-  renderAll(preselectProjectId);
-  setupImportExport();
-  setupCollapsibles();
+  await renderTemplates();
+  // find the new element in the sidebar and open it
+  const el = document.querySelector(`.project-link[data-type="template"][data-id="${id}"]`);
+  await handleSelection("template", id, el);
+}
 
-  // if preselect provided, attempt to load it (renderAll will also mark active)
-  if (preselectProjectId) {
-    // small timeout to ensure renderAll has placed items
-    setTimeout(() => loadView("project", preselectProjectId), 120);
+//////////////////////
+// Load view (page) //
+//////////////////////
+export async function loadView(type, id) {
+  const main = document.querySelector(".main");
+  let url = "";
+  if (type === "project") url = "project.html";
+  if (type === "template") url = "template.html";
+  if (type === "archived") url = "project.html"; // read-only view
+
+  if (!url) return;
+  const res = await fetch(url, { cache: "no-cache" });
+  const html = await res.text();
+  main.innerHTML = html;
+
+  if (type === "project") {
+    const { initProjectView } = await import("./project.js");
+    // initProjectView may be async — wait for it
+    await initProjectView(id, false);
+  } else if (type === "template") {
+    const { initTemplateView } = await import("./template.js");
+    await initTemplateView(id);
+  } else if (type === "archived") {
+    const { initProjectView } = await import("./project.js");
+    await initProjectView(id, true); // read-only
   }
-});
+}

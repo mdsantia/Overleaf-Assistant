@@ -1,14 +1,24 @@
-<div class="config-section" id="templateConfigSection">
-  <h2 id="templateTitle">Template</h2>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Template Config</title>
+  <link rel="stylesheet" href="config.css">
+  <script src="template.js" type="module" defer></script>
+</head>
+<body>
+  <div class="main">
+    <div class="config-section" id="templateConfigSection">
+      <h2 id="templateTitle">Template</h2>
 
-  <label for="templateName">Name:</label>
-  <input type="text" id="templateName" placeholder="Template name">
+      <label for="templateName">Template Name:</label>
+      <input type="text" id="templateName">
 
-  <label for="templateContent">Content:</label>
-  <textarea id="templateContent" rows="10"></textarea>
+      <label for="templateContent">Content:</label>
+      <textarea id="templateContent" rows="10"></textarea>
 
-  <div>
-    <button class="save-button" id="saveTemplateBtn">Save</button>
-    <button class="delete-button" id="deleteTemplateBtn">Delete Template</button>
+      <button class="save-button" id="saveTemplateBtn">Save</button>
+      <button class="save-button" id="deleteTemplateBtn" style="background:#b00;">Delete</button>
+    </div>
   </div>
-</div>
+</body>
+</html>
