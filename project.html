@@ -3,26 +3,38 @@
 <head>
   <title>Project Config</title>
   <link rel="stylesheet" href="config.css">
+  <link rel="stylesheet" href="file_editor.css"> <!-- so we can reuse file-tree styles -->
   <script src="project.js" type="module" defer></script>
 </head>
 <body>
-  <div class="main">
-    <div class="config-section" id="projectConfigSection">
-      <h2 id="projectTitle">Project</h2>
+  <div class="app">
+    <!-- Left: Project config -->
+    <div class="main">
+      <div class="config-section" id="projectConfigSection">
+        <h2 id="projectTitle">Project</h2>
 
-      <label>
-        <input type="checkbox" id="projectAutoSave"> Enable Auto-Save
-      </label>
+        <label>
+          <input type="checkbox" id="projectAutoSave"> Enable Auto-Save
+        </label>
 
-      <label for="projectCustomNote">Custom Note:</label>
-      <input type="text" id="projectCustomNote">
+        <label for="projectCustomNote">Custom Note:</label>
+        <input type="text" id="projectCustomNote">
 
-      <label for="projectTemplateSelect">Template:</label>
-      <select id="projectTemplateSelect"></select>
+        <label for="projectTemplateSelect">Template:</label>
+        <select id="projectTemplateSelect"></select>
 
-      <div id="templateVars"></div>
+        <div id="templateVars"></div>
 
-      <button class="save-button" id="saveProjectBtn">Save</button>
+        <button class="save-button" id="saveProjectBtn">Save</button>
+      </div>
+    </div>
+
+    <!-- Right: Template preview -->
+    <div class="file-editor">
+      <div class="file-editor-header">
+        <span id="previewTitle">Template Preview</span>
+      </div>
+      <div id="previewTree" class="file-tree"></div>
     </div>
   </div>
 </body>

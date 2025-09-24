@@ -1,15 +1,18 @@
+const templateSelect = document.getElementById("projectTemplateSelect");
+const varsContainer = document.getElementById("templateVars");
+const previewTree = document.getElementById("previewTree");
+const previewTitle = document.getElementById("previewTitle");
+
 export function initProjectView(projectId, readOnly = false) {
   const titleEl = document.getElementById("projectTitle");
   const autoSaveEl = document.getElementById("projectAutoSave");
   const noteEl = document.getElementById("projectCustomNote");
   const saveBtn = document.getElementById("saveProjectBtn");
-  const templateSelect = document.getElementById("projectTemplateSelect");
-  const varsContainer = document.getElementById("templateVars");
 
   chrome.storage.local.get(["configProjects", "template"], (data) => {
     const projects = data.configProjects || {};
     const templates = data.template || {};
-    const project = projects[projectId] || {};
+    const project = projects[projectId];
 
     if (!project) {
       titleEl.textContent = "Project not found";
@@ -30,7 +33,14 @@ export function initProjectView(projectId, readOnly = false) {
       templateSelect.appendChild(opt);
     }
 
-    renderTemplateVars(varsContainer, templates[project.templateId], project.variables || {});
+    renderTemplateVars(templates[project.templateId], project.variables || {});
+    renderTemplatePreview(templates[project.templateId]);
+
+    // react to template change
+    templateSelect.onchange = () => {
+      renderTemplateVars(templates[templateSelect.value], {});
+      renderTemplatePreview(templates[templateSelect.value]);
+    };
   });
 
   if (readOnly) {
@@ -59,8 +69,8 @@ export function initProjectView(projectId, readOnly = false) {
   }
 }
 
-function renderTemplateVars(container, template, overrides) {
-  container.innerHTML = "";
+function renderTemplateVars(template, overrides) {
+  varsContainer.innerHTML = "";
   if (!template || !template.variables) return;
 
   for (const v of template.variables) {
@@ -72,8 +82,8 @@ function renderTemplateVars(container, template, overrides) {
     input.id = `var-${v}`;
     input.value = overrides[v] || "";
 
-    container.appendChild(label);
-    container.appendChild(input);
+    varsContainer.appendChild(label);
+    varsContainer.appendChild(input);
   }
 }
 
@@ -84,4 +94,42 @@ function collectTemplateVars() {
     vars[key] = inp.value;
   });
   return vars;
+}
+
+/* Renders file tree in read-only preview */
+function renderTemplatePreview(template) {
+  previewTree.innerHTML = "";
+
+  if (!template) {
+    previewTitle.textContent = "Select a template";
+    return;
+  }
+
+  previewTitle.textContent = `Template: ${template.name}`;
+  template.files.forEach((f) => {
+    previewTree.appendChild(renderNode(f));
+  });
+}
+
+function renderNode(node) {
+  const el = document.createElement("div");
+
+  if (node.type === "folder") {
+    el.classList.add("folder-item");
+    const span = document.createElement("span");
+    span.textContent = node.name;
+    span.onclick = () => el.classList.toggle("open");
+
+    const childrenEl = document.createElement("div");
+    childrenEl.classList.add("folder-children");
+    node.children.forEach((child) => childrenEl.appendChild(renderNode(child)));
+
+    el.appendChild(span);
+    el.appendChild(childrenEl);
+  } else {
+    el.classList.add("file-item");
+    el.textContent = node.name;
+  }
+
+  return el;
 }

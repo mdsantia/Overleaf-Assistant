@@ -1,0 +1,153 @@
+/* App container full window */
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* prevent global scroll */
+  }
+  
+  .app {
+    display: flex;
+    flex: 1;
+    height: 100%;
+    width: 100%;
+  }
+  
+  /* Sidebar (filetree) */
+  .sidebar {
+    width: 240px;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #ddd;
+    overflow-y: auto;
+  }
+  
+  /* Sidebar header/footer */
+  .sidebar-header {
+    padding: 10px;
+    font-weight: bold;
+    border-bottom: 1px solid #ddd;
+  }
+  .sidebar-footer {
+    padding: 10px;
+    border-top: 1px solid #ddd;
+  }
+  
+  /* File tree */
+  .file-tree {
+    flex: 1;
+    padding: 6px;
+    font-size: 14px;
+  }
+  
+  .file-node, .folder-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between; /* name left, menu right */
+    padding: 3px 6px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  
+  .file-node:hover,
+  .folder-item:hover {
+    background: #f0f0f0;
+  }
+  
+  /* Active state (same style as config sidebar) */
+  .file-node.active,
+  .folder-item.active {
+    background-color: #5a5a5a; /* visible grey */
+    color: #fff;
+    box-shadow: inset 4px 0 0 #3a3a3a; /* left indicator */
+    font-weight: 600;
+  }
+  
+  /* Folder arrow + children */
+  .arrow {
+    margin-right: 4px;
+    cursor: pointer;
+  }
+  .folder-children {
+    margin-left: 16px;
+    display: none;
+  }
+  .folder-item.open > .folder-children {
+    display: block;
+  }
+  
+  /* 3-dot menu */
+  .file-menu {
+    visibility: hidden;
+    cursor: pointer;
+    padding: 2px;
+  }
+  .file-node:hover .file-menu,
+  .folder-item:hover .file-menu {
+    visibility: visible;
+    background-color: #333;
+  }
+  
+  /* Popup menu */
+  .popup-menu {
+    position: absolute;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    font-size: 14px;
+    z-index: 1000;
+    padding: 4px 0;
+    min-width: 120px;
+  }
+  .popup-menu div {
+    padding: 6px 12px;
+    cursor: pointer;
+  }
+  .popup-menu div:hover {
+    background: #e6f0ff;
+    background-color: #333;
+  }
+  
+  /* Editor */
+  .file-editor {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    overflow: hidden;
+  }
+  .file-editor-header {
+    padding: 8px;
+    border-bottom: 1px solid #ddd;
+    font-weight: bold;
+    background: #f7f7f7;
+  }
+  .file-editor-body {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+  .file-line-numbers {
+    background: #f0f0f0;
+    padding: 5px;
+    text-align: right;
+    color: #999;
+    user-select: none;
+    width: 40px;
+    border-right: 1px solid #ddd;
+    white-space: pre;
+    overflow-y: auto;
+  }
+  #editorText {
+    flex: 1;
+    border: none;
+    padding: 5px;
+    font-family: monospace;
+    font-size: 14px;
+    resize: none;
+    outline: none;
+    line-height: 1.4;
+    overflow: auto;
+  }
+  

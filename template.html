@@ -1,24 +1,54 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Template Config</title>
+  <title>Template Editor</title>
   <link rel="stylesheet" href="config.css">
+  <link rel="stylesheet" href="file_editor.css">
   <script src="template.js" type="module" defer></script>
 </head>
 <body>
-  <div class="main">
-    <div class="config-section" id="templateConfigSection">
-      <h2 id="templateTitle">Template</h2>
+  <div class="app">
+    <!-- Sidebar with filetree -->
+    <div class="sidebar">
+      <div class="sidebar-header">
+        <span class="editable-title" id="templateTitle" contenteditable="true">
+          Untitled Template
+        </span>
+      </div>
+      <div id="fileTree" class="file-tree"></div>
+      <div class="sidebar-footer">
+        <button id="addFolderBtn">+ Folder</button>
+        <button id="addFileBtn">+ File</button>
+        <button id="deleteTemplateBtn" style="background:#b00;color:#fff;">
+          Delete Template
+        </button>
+      </div>
+    </div>
 
-      <label for="templateName">Template Name:</label>
-      <input type="text" id="templateName">
-
-      <label for="templateContent">Content:</label>
-      <textarea id="templateContent" rows="10"></textarea>
-
-      <button class="save-button" id="saveTemplateBtn">Save</button>
-      <button class="save-button" id="deleteTemplateBtn" style="background:#b00;">Delete</button>
+    <!-- Main editor pane -->
+    <div class="file-editor">
+      <div class="file-editor-header" id="openFileName">
+        No file opened
+      </div>
+      <div class="file-editor-body">
+        <pre id="lineNumbers" class="file-line-numbers">1</pre>
+        <textarea id="editorText" placeholder="Open a file to edit..." disabled></textarea>
+      </div>
     </div>
   </div>
+
+  <script>
+    // Prevent Enter from inserting newline only when renaming (not in text editor)
+    document.addEventListener("keydown", function (e) {
+      if (
+        e.key === "Enter" &&
+        e.target.isContentEditable &&
+        e.target.id !== "editorText"
+      ) {
+        e.preventDefault();
+        e.target.blur();
+      }
+    });
+  </script>
 </body>
 </html>

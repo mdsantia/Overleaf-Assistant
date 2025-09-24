@@ -1,4 +1,13 @@
-// sidebar.js (updated)
+// config.js (complete, improved)
+//
+// Responsibilities:
+// - render Projects / Templates / Archived lists
+// - handle selection and optimistic active highlighting (applies to projects, templates, archived)
+// - archive / unarchive projects
+// - import / export
+// - persist collapsible sidebar state
+// - create new template and immediately open it
+//
 
 /////////////////////
 // storage helpers //
@@ -13,9 +22,9 @@ function storageSet(obj) {
 let loadingView = false;
 let activeSelection = null; // { type, id }
 
-/* ----------------------------
-   DOMContentLoaded (init)
------------------------------ */
+//////////////////////////////
+// DOMContentLoaded (init)  //
+//////////////////////////////
 document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
   const preselectProjectId = params.get("projectId");
@@ -25,16 +34,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   await renderTemplates();
   await renderArchived();
 
-  // Collapsible state should be wired after the content exists
-  setupCollapsibles();
-  await restoreSidebarState(); // apply stored open state
+  // Wire collapsibles and restore state
+  await setupCollapsibles();
+  await restoreSidebarState();
 
   setupImportExport();
 
-  // buttons
+  // Add template button (if present)
   const addTemplateBtn = document.getElementById("addTemplateBtn");
   if (addTemplateBtn) {
-    addTemplateBtn.addEventListener("click", () => createNewTemplate());
+    addTemplateBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      createNewTemplate();
+    });
   }
 });
 
@@ -49,7 +61,7 @@ export async function renderProjects(preselectProjectId = null) {
   if (!projectListEl) return;
   projectListEl.innerHTML = "";
 
-  for (const projectId in projects) {
+  for (const projectId of Object.keys(projects)) {
     const project = projects[projectId];
     const item = createSidebarItem(
       project.name,
@@ -75,7 +87,7 @@ export async function renderTemplates() {
   if (!templateListEl) return;
   templateListEl.innerHTML = "";
 
-  for (const templateId in templates) {
+  for (const templateId of Object.keys(templates)) {
     const template = templates[templateId];
     const item = createSidebarItem(
       template.name,
@@ -96,13 +108,13 @@ export async function renderArchived() {
   if (!archivedListEl) return;
   archivedListEl.innerHTML = "";
 
-  for (const projectId in archived) {
-    const project = archived[projectId];
+  for (const archivedId of Object.keys(archived)) {
+    const project = archived[archivedId];
     const item = createSidebarItem(
       project.name,
       "archived",
-      projectId,
-      async () => { await unarchiveProject(projectId, project); }
+      archivedId,
+      async () => { await unarchiveProject(archivedId, project); }
     );
     archivedListEl.appendChild(item);
   }
@@ -124,26 +136,27 @@ function createSidebarItem(name, type, id, onSecondary) {
   span.className = "project-link-name";
   container.appendChild(span);
 
-  // Primary click (open view)
+  // Primary click opens view (but ignore clicks on internal buttons)
   container.addEventListener("click", (e) => {
-    // If button was clicked, ignore here — its own handler will run.
     if (e.target.tagName === "BUTTON") return;
-    // handleSelection is async but we don't `await` here intentionally
-    // so clicks are responsive; handleSelection itself prevents overlap.
+    // Handle selection (non-blocking)
     handleSelection(type, id, container);
   });
 
+  // Optional secondary button (archive/unarchive)
   if (onSecondary) {
     const btn = document.createElement("button");
     btn.textContent = "📦";
+    btn.title = type === "project" ? "Archive" : "Action";
     btn.style.marginLeft = "8px";
     btn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      // allow secondary action to run, then re-render lists
+      // Run secondary action then refresh lists
       await onSecondary();
       await renderProjects();
       await renderArchived();
-      // If the archived/unarchived item was the active one, clear it
+
+      // If the archived/unarchived item was active, clear the main view & activeSelection
       if (activeSelection && activeSelection.type === type && activeSelection.id === id) {
         activeSelection = null;
         const main = document.querySelector(".main");
@@ -169,15 +182,22 @@ async function handleSelection(type, id, container = null) {
     return;
   }
 
+  // Optimistically set active selection so the UI highlights immediately
+  const previousSelection = activeSelection;
+  activeSelection = { type, id };
+  updateSidebarActiveClasses();
+
   loadingView = true;
   if (container) container.classList.add("loading");
 
   try {
     await loadView(type, id);
-    activeSelection = { type, id };
-    updateSidebarActiveClasses();
+    // keep activeSelection as set
   } catch (err) {
     console.error("Error loading view:", err);
+    // revert active selection on failure
+    activeSelection = previousSelection;
+    updateSidebarActiveClasses();
   } finally {
     if (container) container.classList.remove("loading");
     loadingView = false;
@@ -207,7 +227,7 @@ async function archiveProject(projectId, project) {
   delete projects[projectId];
   await storageSet({ configProjects: projects, archive: archived });
 
-  // If the archived project was open, clear view
+  // If the archived project was open, clear view & activeSelection
   if (activeSelection && activeSelection.type === "project" && activeSelection.id === projectId) {
     activeSelection = null;
     const main = document.querySelector(".main");
@@ -225,6 +245,13 @@ async function unarchiveProject(projectId, project) {
   projects[projectId] = project;
   delete archived[projectId];
   await storageSet({ configProjects: projects, archive: archived });
+
+  // If unarchived item was active in archived view, keep it cleared
+  if (activeSelection && activeSelection.type === "archived" && activeSelection.id === projectId) {
+    activeSelection = null;
+    const main = document.querySelector(".main");
+    if (main) main.innerHTML = "";
+  }
 
   await renderProjects();
   await renderArchived();
@@ -261,6 +288,7 @@ function setupImportExport() {
         const text = await file.text();
         const importedData = JSON.parse(text);
 
+        // merge keys
         for (const key of ["configProjects", "archive", "template"]) {
           if (importedData[key]) {
             const existing = await storageGet(key);
@@ -290,6 +318,7 @@ async function setupCollapsibles() {
     const key = header.dataset.toggle;
     const content = header.nextElementSibling;
     if (!content) return;
+    // apply initial state
     if (state[key]) content.classList.add("open");
     header.addEventListener("click", () => {
       content.classList.toggle("open");
@@ -315,18 +344,27 @@ async function restoreSidebarState() {
 // createNewTemplate helper //
 //////////////////////////////
 async function createNewTemplate() {
+  // create id and template skeleton
   const id = `template-${Date.now()}`;
-  const newTemplate = { name: "New Template", content: "" };
+  const newTemplate = { name: "New Template", files: [], variables: [], id };
 
   const data = await storageGet("template");
   const templates = data.template || {};
   templates[id] = newTemplate;
   await storageSet({ template: templates });
 
+  // re-render templates
   await renderTemplates();
+
   // find the new element in the sidebar and open it
+  // selector should exist after renderTemplates
   const el = document.querySelector(`.project-link[data-type="template"][data-id="${id}"]`);
-  await handleSelection("template", id, el);
+  if (el) {
+    await handleSelection("template", id, el);
+  } else {
+    // fallback: just open the template view directly
+    await handleSelection("template", id, null);
+  }
 }
 
 //////////////////////
@@ -337,16 +375,18 @@ export async function loadView(type, id) {
   let url = "";
   if (type === "project") url = "project.html";
   if (type === "template") url = "template.html";
-  if (type === "archived") url = "project.html"; // read-only view
+  if (type === "archived") url = "project.html"; // archived uses project read-only view
 
   if (!url) return;
+
+  // fetch html and inject
   const res = await fetch(url, { cache: "no-cache" });
   const html = await res.text();
   main.innerHTML = html;
 
+  // after injecting, call the appropriate initializer
   if (type === "project") {
     const { initProjectView } = await import("./project.js");
-    // initProjectView may be async — wait for it
     await initProjectView(id, false);
   } else if (type === "template") {
     const { initTemplateView } = await import("./template.js");
@@ -355,4 +395,7 @@ export async function loadView(type, id) {
     const { initProjectView } = await import("./project.js");
     await initProjectView(id, true); // read-only
   }
+
+  // ensure active class remains correct (the DOM changed)
+  updateSidebarActiveClasses();
 }
