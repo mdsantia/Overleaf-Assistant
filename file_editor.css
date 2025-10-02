@@ -40,23 +40,31 @@ html, body {
     font-size: 14px;
   }
   
-  .file-node, .folder-item {
+  .folder-header,
+  .file-node {
     display: flex;
+    justify-content: space-between; /* ✅ pushes trash to far right */
     align-items: center;
-    justify-content: space-between; /* name left, menu right */
     padding: 3px 6px;
-    border-radius: 3px;
-    cursor: pointer;
+  }
+
+  .file-name {
+    flex: 1; /* ✅ take all available space, keeps bins aligned */
+    min-width: 0; /* prevent overflow pushing bins */
+  }
+
+  .folder-item {
+    flex-direction: "column";
   }
   
   .file-node:hover,
-  .folder-item:hover {
-    background: #f0f0f0;
+  .folder-header:hover {
+    background: #a1a1a1;
   }
   
   /* Active state (same style as config sidebar) */
   .file-node.active,
-  .folder-item.active {
+  .folder-header.active {
     background-color: #5a5a5a; /* visible grey */
     color: #fff;
     box-shadow: inset 4px 0 0 #3a3a3a; /* left indicator */
@@ -64,28 +72,31 @@ html, body {
   }
   
   /* Folder arrow + children */
+  /* delete button (red transparent) */
+  .delete-btn {
+    background: rgba(255,0,0,0.12);
+    border: none;
+    color: #900;
+    border-radius: 4px;
+    padding: 4px;
+    cursor: pointer;
+  }
   .arrow {
     margin-right: 4px;
     cursor: pointer;
   }
+  /* indent children */
   .folder-children {
     margin-left: 16px;
-    display: none;
-  }
-  .folder-item.open > .folder-children {
-    display: block;
+    display: flex;
+    flex-direction: column; 
   }
   
-  /* 3-dot menu */
-  .file-menu {
-    visibility: hidden;
-    cursor: pointer;
-    padding: 2px;
-  }
   .file-node:hover .file-menu,
+  .folder-item .delete-btn, 
+  .file-node .delete-btn,
   .folder-item:hover .file-menu {
     visibility: visible;
-    background-color: #333;
   }
   
   /* Popup menu */
@@ -150,4 +161,3 @@ html, body {
     line-height: 1.4;
     overflow: auto;
   }
-  
