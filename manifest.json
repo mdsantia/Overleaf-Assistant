@@ -1,6 +1,6 @@
 {
   "name": "Overleaf Helper",
-  "version": "1.8.3",
+  "version": "1.8.4",
   "manifest_version": 3,
   "permissions": [
     "activeTab",

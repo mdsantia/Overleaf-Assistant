@@ -136,27 +136,78 @@ function createSidebarItem(name, type, id, onSecondary) {
   span.className = "project-link-name";
   container.appendChild(span);
 
-  // Primary click opens view (but ignore clicks on internal buttons)
+  // Primary click opens view
   container.addEventListener("click", (e) => {
     if (e.target.tagName === "BUTTON") return;
-    // Handle selection (non-blocking)
     handleSelection(type, id, container);
   });
 
-  // Optional secondary button (archive/unarchive)
-  if (onSecondary) {
-    const btn = document.createElement("button");
-    btn.textContent = "📦";
-    btn.title = type === "project" ? "Archive" : "Action";
-    btn.style.marginLeft = "8px";
-    btn.addEventListener("click", async (e) => {
+  // Secondary button
+  let secondaryBtn = null;
+
+  if (type === "template") {
+    // DELETE button with double confirmation
+    secondaryBtn = document.createElement("button");
+    secondaryBtn.textContent = "🗑️";
+    secondaryBtn.title = "Delete template";
+    secondaryBtn.style.marginLeft = "8px";
+    secondaryBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      // Run secondary action then refresh lists
+      if (!confirm("Are you sure you want to delete this template?")) return;
+      if (!confirm("Really delete? This cannot be undone!")) return;
+
+      const data = await storageGet("template");
+      const templates = data.template || {};
+      delete templates[id];
+      await storageSet({ template: templates });
+
+      if (activeSelection && activeSelection.type === "template" && activeSelection.id === id) {
+        activeSelection = null;
+        const main = document.querySelector(".main");
+        if (main) main.innerHTML = "";
+      }
+
+      await renderTemplates();
+    });
+  } else if (type === "archived") {
+    // Unbox button
+    secondaryBtn = document.createElement("button");
+    secondaryBtn.textContent = "📤";
+    secondaryBtn.title = "Unarchive";
+    secondaryBtn.style.marginLeft = "8px";
+    secondaryBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const data = await storageGet(["configProjects", "archive"]);
+      const projects = data.configProjects || {};
+      const archived = data.archive || {};
+      const project = archived[id];
+      if (!project) return;
+
+      projects[id] = project;
+      delete archived[id];
+      await storageSet({ configProjects: projects, archive: archived });
+
+      if (activeSelection && activeSelection.type === "archived" && activeSelection.id === id) {
+        activeSelection = null;
+        const main = document.querySelector(".main");
+        if (main) main.innerHTML = "";
+      }
+
+      await renderProjects();
+      await renderArchived();
+    });
+  } else if (onSecondary) {
+    // default archive button for projects
+    secondaryBtn = document.createElement("button");
+    secondaryBtn.textContent = "📦";
+    secondaryBtn.title = "Archive";
+    secondaryBtn.style.marginLeft = "8px";
+    secondaryBtn.addEventListener("click", async (e) => {
+      e.stopPropagation();
       await onSecondary();
       await renderProjects();
       await renderArchived();
 
-      // If the archived/unarchived item was active, clear the main view & activeSelection
       if (activeSelection && activeSelection.type === type && activeSelection.id === id) {
         activeSelection = null;
         const main = document.querySelector(".main");
@@ -164,9 +215,9 @@ function createSidebarItem(name, type, id, onSecondary) {
       }
       updateSidebarActiveClasses();
     });
-    container.appendChild(btn);
   }
 
+  if (secondaryBtn) container.appendChild(secondaryBtn);
   return container;
 }
 

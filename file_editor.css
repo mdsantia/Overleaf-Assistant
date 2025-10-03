@@ -49,9 +49,15 @@ html, body {
   }
 
   .file-name {
-    flex: 1; /* ✅ take all available space, keeps bins aligned */
-    min-width: 0; /* prevent overflow pushing bins */
-  }
+    display: inline-block;
+    width: fit-content;
+    min-width: 1ch;
+  }  
+
+  .file-name:empty::before {
+    content: attr(placeholder);
+    color: #aaa;
+  }  
 
   .folder-item {
     flex-direction: "column";
@@ -161,3 +167,20 @@ html, body {
     line-height: 1.4;
     overflow: auto;
   }
+
+  #variableListContainer {
+    display: flex;
+    flex-direction: column-reverse; /* bottom-up stacking */
+    margin-top: 1em;
+  }
+  
+  #variableList {
+    display: flex;
+    flex-direction: column-reverse; /* bottom-up items */
+    gap: 4px;
+  }
+  
+  #variableList.collapsed {
+    display: none;
+  }
+  

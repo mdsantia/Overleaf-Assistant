@@ -16,11 +16,18 @@
         </span>
       </div>
       <div id="fileTree" class="file-tree"></div>
+      <div id="variableListContainer">
+        <div id="variableListHeader">
+          Variables
+          <button id="toggleVarListBtn">▼</button>
+        </div>
+        <div id="variableList" class="collapsed"></div>
+      </div>
       <div class="sidebar-footer">
         <button id="addFolderBtn">+ Folder</button>
         <button id="addFileBtn">+ File</button>
-        <button id="deleteTemplateBtn" style="background:#b00;color:#fff;">
-          Delete Template
+        <button id="addVarBtn" style="background:rgb(0, 153, 68);color:#fff;">
+          Add Variable
         </button>
       </div>
     </div>
@@ -36,19 +43,5 @@
       </div>
     </div>
   </div>
-
-  <script>
-    // Prevent Enter from inserting newline only when renaming (not in text editor)
-    document.addEventListener("keydown", function (e) {
-      if (
-        e.key === "Enter" &&
-        e.target.isContentEditable &&
-        e.target.id !== "editorText"
-      ) {
-        e.preventDefault();
-        e.target.blur();
-      }
-    });
-  </script>
 </body>
 </html>
