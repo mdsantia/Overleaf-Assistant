@@ -33,6 +33,7 @@ export async function initTemplateView(templateId) {
   const titleEl = document.getElementById("templateTitle");
   const varListEl = document.getElementById("variableList");
   const toggleVarListBtn = document.getElementById("toggleVarListBtn");
+  const variableListHeader = document.getElementById("variableListHeader");
   const fileTreeEl = document.getElementById("fileTree");
   const editorText = document.getElementById("editorText");
   const lineNumbers = document.getElementById("lineNumbers");
@@ -68,11 +69,15 @@ export async function initTemplateView(templateId) {
   };
 
   // Variable list toggle
-  toggleVarListBtn.onclick = (e) => {
+  function toggleVariableList(e) {
     e.stopPropagation();
     varListEl.classList.toggle("collapsed");
     toggleVarListBtn.textContent = varListEl.classList.contains("collapsed") ? "▶" : "▼";
-  };
+  }
+  
+  // ✅ Click anywhere on header (arrow + text)
+  variableListHeader.onclick = toggleVariableList;  
+  toggleVarListBtn.onclick = toggleVariableList;
 
 
   addFileBtn.onclick = () => {
