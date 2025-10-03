@@ -408,14 +408,25 @@ async function createNewTemplate() {
   await renderTemplates();
 
   // find the new element in the sidebar and open it
-  // selector should exist after renderTemplates
   const el = document.querySelector(`.project-link[data-type="template"][data-id="${id}"]`);
   if (el) {
     await handleSelection("template", id, el);
   } else {
-    // fallback: just open the template view directly
     await handleSelection("template", id, null);
   }
+
+  // ✅ after view loads, focus & select the title text
+  requestAnimationFrame(() => {
+    const titleEl = document.getElementById("templateTitle");
+    if (titleEl) {
+      titleEl.focus();
+      const range = document.createRange();
+      range.selectNodeContents(titleEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  });
 }
 
 //////////////////////

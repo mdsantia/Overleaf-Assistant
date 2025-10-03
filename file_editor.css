@@ -49,6 +49,7 @@ html, body {
   }
 
   .file-node.editing,
+  .editable-title.editing,
   .folder-item.editing {
     background-color: #5a5a5a; /* visible grey */
     color: #fff;

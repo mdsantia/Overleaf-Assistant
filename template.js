@@ -45,7 +45,17 @@ export async function initTemplateView(templateId) {
   titleEl.textContent = currentTemplate.name || "Untitled Template";
   titleEl.contentEditable = true;
   titleEl.spellcheck = false;
-  titleEl.addEventListener("input", () => {
+  titleEl.addEventListener("focus", () => {
+    titleEl.classList.add("editing");
+  });    
+  titleEl.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      titleEl.blur();
+    }
+  });
+  titleEl.addEventListener("blur", () => {
+    titleEl.classList.remove("editing");
     currentTemplate.name = titleEl.textContent.trim();
     saveTemplate();
   });
