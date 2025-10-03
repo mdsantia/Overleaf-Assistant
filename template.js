@@ -51,18 +51,29 @@ export async function initTemplateView(templateId) {
 
   // Add variable button
   addVarBtn.onclick = async () => {
-    const varName = prompt("Enter new variable name:");
-    if (!varName) return;
-    currentTemplate.variables = currentTemplate.variables || [];
-    currentTemplate.variables.push({ name: varName, value: "" });
+    // If collapsed, expand before adding
+    if (varListEl.classList.contains("collapsed")) {
+      varListEl.classList.remove("collapsed");
+      toggleVarListBtn.textContent = "▼";
+    }
+  
+    currentTemplate.variables.push({ name: "newVar" });
     saveTemplate();
-    // renderVariableList(varListEl);
+    renderVariableList(
+      varListEl,
+      currentTemplate.variables,
+      [currentTemplate.variables.length - 1],
+      true // autofocus
+    );
   };
 
-  toggleVarListBtn.onclick = () => {
+  // Variable list toggle
+  toggleVarListBtn.onclick = (e) => {
+    e.stopPropagation();
     varListEl.classList.toggle("collapsed");
     toggleVarListBtn.textContent = varListEl.classList.contains("collapsed") ? "▶" : "▼";
   };
+
 
   addFileBtn.onclick = () => {
     currentTemplate.files.push({ type: "file", name: "newfile.txt", content: "" });
@@ -75,8 +86,7 @@ export async function initTemplateView(templateId) {
     const newFolder = { type: "folder", name: "New Folder", children: [] };
     currentTemplate.files.push(newFolder);
     saveTemplate();
-    const newEl = renderFileTree(fileTreeEl, currentTemplate.files, [currentTemplate.files.length - 1]);
-    if (newEl) openFile(newEl.node, newEl.wrapper);
+    renderFileTree(fileTreeEl, currentTemplate.files, [currentTemplate.files.length - 1]);
   };
 
   // Editor auto-save
@@ -89,7 +99,7 @@ export async function initTemplateView(templateId) {
   });
 
   renderFileTree(fileTreeEl, currentTemplate.files || []);
-  // renderVariableList(varListEl);
+  renderVariableList(varListEl, currentTemplate.variables || []);
   updateLineNumbers(editorText, lineNumbers);
 }
 
@@ -108,42 +118,63 @@ async function saveTemplate() {
 /////////////////////////////
 // File tree manipulation  //
 /////////////////////////////
-function renderVariableList(container) {
+function renderVariableList(container, nodes, focusPath = null, isNew = false) {
   container.innerHTML = "";
-  if (!currentTemplate.variables) currentTemplate.variables = [];
 
-  currentTemplate.variables.forEach((v, idx) => {
+  nodes.forEach((v, idx) => {
     const wrapper = document.createElement("div");
-    wrapper.className = "variable-item";
+    wrapper.className = "variable-node";
 
-    const nameInput = document.createElement("input");
-    nameInput.value = v.name;
-    nameInput.placeholder = "var name";
-    nameInput.addEventListener("change", () => {
-      v.name = nameInput.value.trim();
+    const nameSpan = Object.assign(document.createElement("span"), {
+      className: "variable-name",
+      textContent: v.name,
+      contentEditable: true,
+      spellcheck: false,
+    });
+    nameSpan.addEventListener("focus", () => {
+      wrapper.classList.add("editing");
+    });    
+    nameSpan.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        nameSpan.blur();
+      }
+    });
+    nameSpan.addEventListener("blur", () => {
+      wrapper.classList.remove("editing");
+      v.name = nameSpan.textContent.trim();
       saveTemplate();
     });
 
-    const valueInput = document.createElement("input");
-    valueInput.value = v.value;
-    valueInput.placeholder = "value";
-    valueInput.addEventListener("change", () => {
-      v.value = valueInput.value;
-      saveTemplate();
-    });
-
+    // Delete button
     const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "🗑️";
+    deleteBtn.className = "variable-delete-btn";
+    deleteBtn.innerHTML = "🗑️";
     deleteBtn.onclick = () => {
-      currentTemplate.variables.splice(idx, 1);
-      saveTemplate();
-      // renderVariableList(varListEl);
+      if (confirm(`Delete "${v.name}"? This cannot be undone.`)) {
+        nodes.splice(idx, 1);
+        saveTemplate();
+        renderVariableList(document.getElementById("variableList"), currentTemplate.variables || []);
+      }
     };
 
-    wrapper.append(nameInput, valueInput, deleteBtn);
-    varListEl.appendChild(wrapper);
+    wrapper.append(nameSpan, deleteBtn);
+    container.appendChild(wrapper);
+
+    // ✅ Autofocus new variable
+    if (isNew && idx === nodes.length - 1) {
+      requestAnimationFrame(() => {
+        nameSpan.focus();
+        const range = document.createRange();
+        range.selectNodeContents(nameSpan);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      });
+    }
   });
 }
+
 
 function renderFileTree(container, nodes, focusPath = null) {
   container.innerHTML = "";
@@ -193,8 +224,13 @@ function renderFileTree(container, nodes, focusPath = null) {
     if (isNew && nameSpan) {
       requestAnimationFrame(() => {
         nameSpan.focus();
-        document.execCommand("selectAll", false, null);
+        const range = document.createRange();
+        range.selectNodeContents(nameSpan);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
       });
+
       newEl = { wrapper, node }; // store for opening later
     }
   });
@@ -212,7 +248,9 @@ function createFileNodeElement(node, parentArray, index, isNew = false) {
     spellcheck: false,
   });
   nameSpan.setAttribute("placeholder", "Untitled");
-
+  nameSpan.addEventListener("focus", () => {
+    wrapper.classList.add("editing");
+  });
   nameSpan.addEventListener("click", e => e.stopPropagation());
   nameSpan.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -222,6 +260,7 @@ function createFileNodeElement(node, parentArray, index, isNew = false) {
   });
   
   nameSpan.addEventListener("blur", () => {
+    wrapper.classList.remove("editing");
     node.name = nameSpan.textContent.trim();
     saveTemplate();
   

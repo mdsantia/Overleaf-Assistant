@@ -48,6 +48,14 @@ html, body {
     padding: 3px 6px;
   }
 
+  .file-node.editing,
+  .folder-item.editing {
+    background-color: #5a5a5a; /* visible grey */
+    color: #fff;
+    box-shadow: inset 4px 0 0 #3a3a3a; /* left indicator */
+    font-weight: 600;
+  }
+
   .file-name {
     display: inline-block;
     width: fit-content;
@@ -168,19 +176,70 @@ html, body {
     overflow: auto;
   }
 
-  #variableListContainer {
+  /* Variable list */
+  .variable-list {
+    flex: 1;
+    padding: 6px;
+    font-size: 14px;
     display: flex;
-    flex-direction: column-reverse; /* bottom-up stacking */
-    margin-top: 1em;
-  }
-  
-  #variableList {
-    display: flex;
-    flex-direction: column-reverse; /* bottom-up items */
+    flex-direction: column;
     gap: 4px;
   }
-  
+
+  .variable-node {
+    display: flex;
+    justify-content: space-between; /* ✅ pushes trash to far right */
+    align-items: center;
+    padding: 3px 6px;
+  }
+
+  /* Variable node hover & focus */
+  .variable-node:hover,
+  .variable-node.editing {
+    background-color: #5a5a5a; /* visible grey */
+    color: #fff;
+    box-shadow: inset 4px 0 0 #3a3a3a; /* left indicator */
+    font-weight: 600;
+  }
+
+  .variable-name {
+    display: flex;
+    flex: 1;
+    margin-left: 20px;
+  }
+
+  .variable-delete-btn {
+    background: rgba(255,0,0,0.12);
+    border: none;
+    color: #900;
+    border-radius: 4px;
+    padding: 4px;
+    cursor: pointer;
+  }
+
   #variableList.collapsed {
     display: none;
   }
-  
+
+  /* Variables heading */
+  #variableListHeader {
+    font-weight: bold;
+    font-size: 14px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* ✅ left aligned */
+    cursor: default; /* no hover hand */
+    border-bottom: 1px solid #ddd;
+    background: #5a5a5a;
+  }
+
+  /* Adjust arrow button inside heading */
+  #toggleVarListBtn.arrow {
+    background: none;
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    margin-right: 6px;
+    color: #fff;
+  }
