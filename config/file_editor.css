@@ -13,26 +13,6 @@ html, body {
     width: 100%;
   }
   
-  /* Sidebar (filetree) */
-  .sidebar {
-    width: 240px;
-    display: flex;
-    flex-direction: column;
-    border-right: 1px solid #ddd;
-    overflow-y: auto;
-  }
-  
-  /* Sidebar header/footer */
-  .sidebar-header {
-    padding: 10px;
-    font-weight: bold;
-    border-bottom: 1px solid #ddd;
-  }
-  .sidebar-footer {
-    padding: 10px;
-    border-top: 1px solid #ddd;
-  }
-  
   /* File tree */
   .file-tree {
     flex: 1;

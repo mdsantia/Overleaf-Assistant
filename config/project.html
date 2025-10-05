@@ -13,14 +13,15 @@
 
       <!-- Primary Settings -->
       <section class="config-section" id="primarySettings">
+        <h1 id="projectName">Untitled</h1>
         <h2>Primary Settings</h2>
 
-        <label for="projectName">Main Document Name:</label>
-        <input type="text" id="projectName" placeholder="e.g. paper.tex">
+        <label for="mainDoc">Main Document Name:</label>
+        <input type="text" id="mainDoc" placeholder="e.g. paper.tex">
 
         <label>
           <input type="checkbox" id="popupShortcut">
-          Add to Popup Shortcut
+          Add to Popup List
         </label>
 
         <label>
@@ -28,26 +29,17 @@
           Enable Local Back-up
         </label>
 
-        <div id="backupFolderSelect" class="sub-option hidden">
-          <label for="backupParentFolder">Parent Folder:</label>
-          <input type="text" id="backupParentFolder" placeholder="Select folder…">
+        <!-- Folder selection -->
+        <div class="backupFolderSelect">
+          <input type="file" id="backupParentFolder" webkitdirectory directory style="display:inline">📁 Select Folder</input>
         </div>
-
-        <label for="importTemplates">Import Templates:</label>
-        <select id="importTemplates" multiple></select>
 
         <!-- Popup Customizations -->
         <fieldset id="popupCustomizations" class="hidden">
           <legend>Popup Customizations</legend>
-          <label>
-            <input type="checkbox" id="openPdfToggle"> Open PDF Viewer
-          </label>
-          <label>
-            <input type="checkbox" id="showPdfButton"> Show PDF Button
-          </label>
-          <label>
-            <input type="checkbox" id="autoAutoSaveToggle"> Auto Auto-Save
-          </label>
+          <label><input type="checkbox" id="openPdfToggle"> Open PDF Viewer</label>
+          <label><input type="checkbox" id="showPdfButton"> Show PDF Button</label>
+          <label><input type="checkbox" id="autoAutoSaveToggle"> Auto Auto-Save</label>
         </fieldset>
       </section>
 
@@ -68,7 +60,7 @@
     <!-- RIGHT SIDE: File Editor -->
     <div class="file-editor">
       <div class="file-editor-header">
-        <h2>File Editor</h2>
+        <h2>Variable Editor</h2>
       </div>
       <div id="fileEditorContent" class="editor-content">
         <p>Select a variable to edit.</p>

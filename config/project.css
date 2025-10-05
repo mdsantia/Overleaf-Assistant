@@ -51,6 +51,7 @@
     padding: 14px;
     margin-bottom: 16px;
     border: 1px solid rgba(255,255,255,0.02);
+    width: 100%;
   }
   
   /* Headings */
@@ -60,6 +61,7 @@
     color: var(--text);
     font-size: 13px;
     letter-spacing: 0.4px;
+    width: 100%;
     display:flex;
     align-items:center;
     gap:8px;
@@ -168,6 +170,10 @@
   /* Danger zone */
   .danger-zone {
     border-left: 3px solid rgba(217,83,79,0.12);
+    display: flex;
+    width: 100%;
+    flex-direction: column;
+    align-items: center;
   }
   .delete-btn {
     width: 100%;
@@ -197,6 +203,42 @@
     border: 1px solid rgba(255,255,255,0.02);
   }
   .template-usage .meta { color:var(--muted); font-size:13px; }
+
+  .backupFolderSelect {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  
+  #backupParentFolder {
+    flex: 1;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 8px;
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 13px;
+  }
+  
+  .template-usage select,
+  .template-usage input[type="text"] {
+    flex: 1;
+    min-width: 120px;
+    background: transparent;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: var(--text);
+  }
+  
+  .template-usage {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }  
   
   /* import multi-select visual improvement */
   select[multiple] {
@@ -239,11 +281,15 @@
   .file-editor-header h2 { margin:0; font-size:13px; color:var(--text); }
   
   /* editor content */
-  .editor-content {
-    padding: 18px;
-    overflow-y: auto;
-    flex:1;
-    color:var(--muted);
+  .editor-content { flex:1; margin:12px 0; }
+
+  .save-button {
+    align-self:flex-start;
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:8px 14px;
+    border-radius:6px;
   }
   
   /* variable card */
@@ -306,4 +352,21 @@
   
   /* utility hidden */
   .hidden { display:none !important; }
+  
+  .var-card {
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  
+  .var-editor.text {
+    min-height:32px;
+    font-family:inherit;
+  }
+  
+  .var-editor.code {
+    min-height:200px;
+    font-family:monospace;
+    white-space:pre;
+  }
   

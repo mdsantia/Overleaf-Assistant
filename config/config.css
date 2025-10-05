@@ -2,20 +2,46 @@ body {
   margin: 0;
   font-family: "Helvetica Neue", Arial, sans-serif;
   display: flex;
-  height: 100vh;
   background-color: #fff;
   color: #111;
+}
+/* App container full window */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden; /* prevent global scroll */
+}
+
+.app {
+  display: flex;
+  flex: 1;
+  height: 100%;
+  width: 100%;
 }
 
 /* Sidebar */
 .sidebar {
-  width: 220px;
+  width: 240px;
   background-color: #1a1a1a;
   color: #eee;
   padding: 12px;
   display: flex;
   flex-direction: column;
+  border-right: 1px solid #ddd;
   overflow-y: auto;
+}
+
+
+/* Sidebar header/footer */
+.sidebar-header {
+  padding: 10px;
+  font-weight: bold;
+  border-bottom: 1px solid #ddd;
+}
+.sidebar-footer {
+  padding: 10px;
+  border-top: 1px solid #ddd;
 }
 
 .sidebar h3 {

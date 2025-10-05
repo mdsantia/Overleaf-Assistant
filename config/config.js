@@ -224,16 +224,13 @@ function createSidebarItem(name, type, id, onSecondary) {
 /////////////////////////
 // Selection & loading //
 /////////////////////////
-async function handleSelection(type, id, container = null) {
-  // If already loading, ignore additional requests
+async function handleSelection(type, id, container = null, focusTitle = false) {
   if (loadingView) return;
 
-  // If the clicked item is already active, just return (idempotent)
   if (activeSelection && activeSelection.type === type && activeSelection.id === id) {
     return;
   }
 
-  // Optimistically set active selection so the UI highlights immediately
   const previousSelection = activeSelection;
   activeSelection = { type, id };
   updateSidebarActiveClasses();
@@ -243,10 +240,21 @@ async function handleSelection(type, id, container = null) {
 
   try {
     await loadView(type, id);
-    // keep activeSelection as set
+
+    // ✅ Focus template title if requested
+    if (type === "template" && focusTitle) {
+      const titleEl = document.getElementById("templateTitle");
+      if (titleEl) {
+        titleEl.focus();
+        const range = document.createRange();
+        range.selectNodeContents(titleEl);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
   } catch (err) {
     console.error("Error loading view:", err);
-    // revert active selection on failure
     activeSelection = previousSelection;
     updateSidebarActiveClasses();
   } finally {
@@ -254,6 +262,7 @@ async function handleSelection(type, id, container = null) {
     loadingView = false;
   }
 }
+
 
 function updateSidebarActiveClasses() {
   document.querySelectorAll(".project-link").forEach((el) => {
@@ -395,7 +404,6 @@ async function restoreSidebarState() {
 // createNewTemplate helper //
 //////////////////////////////
 async function createNewTemplate() {
-  // create id and template skeleton
   const id = `template-${Date.now()}`;
   const newTemplate = { name: "New Template", files: [], variables: [], id };
 
@@ -404,29 +412,15 @@ async function createNewTemplate() {
   templates[id] = newTemplate;
   await storageSet({ template: templates });
 
-  // re-render templates
   await renderTemplates();
 
-  // find the new element in the sidebar and open it
   const el = document.querySelector(`.project-link[data-type="template"][data-id="${id}"]`);
   if (el) {
-    await handleSelection("template", id, el);
+    // ✅ Pass true to indicate autofocus
+    await handleSelection("template", id, el, true);
   } else {
-    await handleSelection("template", id, null);
+    await handleSelection("template", id, null, true);
   }
-
-  // ✅ after view loads, focus & select the title text
-  requestAnimationFrame(() => {
-    const titleEl = document.getElementById("templateTitle");
-    if (titleEl) {
-      titleEl.focus();
-      const range = document.createRange();
-      range.selectNodeContents(titleEl);
-      const sel = window.getSelection();
-      sel.removeAllRanges();
-      sel.addRange(range);
-    }
-  });
 }
 
 //////////////////////

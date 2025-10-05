@@ -137,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
           configButton.title = "Configure Project";
           configButton.addEventListener("click", (event) => {
             event.stopPropagation();
-            chrome.tabs.create({ url: chrome.runtime.getURL(`config.html?projectId=${projectId}`) });
+            chrome.tabs.create({ url: chrome.runtime.getURL(`config/config.html?projectId=${projectId}`) });
           });
           
           // Append everything
