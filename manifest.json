@@ -7,8 +7,10 @@
     "scripting",
     "commands",
     "storage",
-    "fileSystem",
-    "contextMenus"
+    "fileSystem"
+  ],
+  "host_permissions": [
+    "https://www.overleaf.com/*"
   ],
   "background": {
     "service_worker": "sidepanel/background.js",

@@ -29,7 +29,7 @@
 
     // Tooltip
     const tooltip = document.createElement("div");
-    tooltip.textContent = "Save Locally?";
+    tooltip.textContent = "Save Locally (⇧+Click = Upload)";
     tooltip.style.position = "absolute";
     tooltip.style.top = "30px";
     tooltip.style.right = "40px";
@@ -54,42 +54,43 @@
       saveIcon.style.transform = "scale(1)";
     });
 
-    // Click handler
-    saveIcon.addEventListener("click", () => {
+    // Click handler (normal = toggle autosave; shift-click = upload panel)
+    saveIcon.addEventListener("click", (e) => {
+      if (e.shiftKey) {
+        // Shift-click opens upload panel
+        chrome.runtime.sendMessage({
+          action: "open-upload-panel",
+          projectId: projectId,
+        });
+        return;
+      }
+
+      // Normal click toggles autosave
       chrome.storage.local.get(["popProjects", "configProjects"], (data) => {
         const popProjects = data.popProjects || {};
         const configProjects = data.configProjects || {};
         const project = popProjects[projectId] || {};
-        
-        const new_autosave = !project.autoSave; // toggle
-        
+        const new_autosave = !project.autoSave;
+
         const projectNameElement = document.querySelector(
-          '#ide-root > div.ide-react-main > nav > div.project-name.toolbar-center > span'
-          );
-          const projectName = projectNameElement
+          "#ide-root > div.ide-react-main > nav > div.project-name.toolbar-center > span"
+        );
+        const projectName = projectNameElement
           ? projectNameElement.textContent.trim()
           : "Untitled Project";
-          
-          popProjects[projectId] = {
-            name: projectName,
-            autoSave: new_autosave,
-          };
-        
-          configProjects[projectId] = {
-            name: projectName
-          };
 
-          chrome.storage.local.set({ popProjects: popProjects, configProjects: configProjects }, () => {
-              console.log(
+        popProjects[projectId] = { name: projectName, autoSave: new_autosave };
+        configProjects[projectId] = { ...configProjects[projectId], name: projectName };
+
+        chrome.storage.local.set({ popProjects, configProjects }, () => {
+          console.log(
             `Saving ${new_autosave ? "enabled" : "disabled"} for project ${projectId}.`
           );
-          // Recreate the icon with updated state
           createSaveIcon(projectId, new_autosave);
         });
       });
     });
 
-    // Assemble and add to page
     iconContainer.appendChild(tooltip);
     iconContainer.appendChild(saveIcon);
     document.body.appendChild(iconContainer);
