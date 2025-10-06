@@ -29,10 +29,13 @@
           Enable Local Back-up
         </label>
 
-        <!-- Folder selection -->
-        <div class="backupFolderSelect">
-          <input type="file" id="backupParentFolder" webkitdirectory directory style="display:inline">📁 Select Folder</input>
+        <!-- Folder selection section -->
+        <div class="folder-selection">
+          <button id="selectFolderButton">📁 Select Folder</button>
+          <span id="folderName" style="margin-left:8px; font-style:italic;">None</span>
+          <input type="file" id="folderInput" webkitdirectory directory style="display:none;">
         </div>
+
 
         <!-- Popup Customizations -->
         <fieldset id="popupCustomizations" class="hidden">

@@ -1,35 +1,39 @@
-import { renderValue } from "./templateRenderer.js";
+// fileTreeBuilder.js
 
-async function buildNode(node, vars, path = "") {
-    if (node.type === "folder") {
-      const folderName = await renderValue(node.name, vars);
-      const folderPath = `${path}${folderName}/`;
-  
-      const files = [];
-      for (const child of node.children || []) {
-        const childFiles = await buildNode(child, vars, folderPath);
-        files.push(...childFiles);
-      }
-      return files;
-    }
-  
-    if (node.type === "file") {
-      const name = await renderValue(node.name, vars);
-      const content = await renderValue(node.content || "", vars);
-      const blob = new Blob([content], { type: "text/plain" });
-      const file = new File([blob], path + name);
-      return [file];
-    }
-  
-    return [];
+/**
+ * Recursively build file/folder tree with variable substitution
+ * @param {Object} node - single file or folder node
+ * @param {Object} vars - variables to replace, e.g., { hwnum: "5" }
+ * @returns {Array} processed file/folder tree
+ */
+ export function buildFileTree(node, vars) {
+  // Helper to replace $var/$ in strings
+  const replaceVars = (str) => {
+    if (!str) return "";
+    return str.replace(/\$\s*\\?(\w+)\s*\/\$/g, (_, v) => vars[v] ?? "");
+  };
+
+  // If node is an array, process each element
+  if (Array.isArray(node)) {
+    return node.map((n) => buildFileTree(n, vars)).flat();
   }
-  
-  async function buildFileTree(template, vars) {
-    const allFiles = [];
-    for (const fileDef of template.files || []) {
-      const files = await buildNode(fileDef, vars);
-      allFiles.push(...files);
-    }
-    return allFiles;
+
+  // Process name with variables
+  const name = replaceVars(node.name);
+
+  if (node.type === "folder") {
+    return {
+      ...node,
+      name,
+      children: node.children ? buildFileTree(node.children, vars) : [],
+    };
+  } else if (node.type === "file") {
+    return {
+      ...node,
+      name,
+      content: replaceVars(node.content),
+    };
   }
-  
+
+  return node;
+}

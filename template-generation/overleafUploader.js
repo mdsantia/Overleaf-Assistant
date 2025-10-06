@@ -1,66 +1,84 @@
-async function handleUploadTemplate() {
-    const { templates, configProjects, activeProjectId } = await chrome.storage.local.get([
-      "templates",
-      "configProjects",
-      "activeProjectId"
-    ]);
-  
-    if (!templates || !configProjects) {
-      console.error("Templates or configProjects not found in storage.");
-      return;
-    }
-  
-    // Determine which project’s variables to use
-    const projectId = activeProjectId || Object.keys(configProjects)[0];
-    const project = configProjects[projectId];
-    if (!project) {
-      console.error("No active or valid project found.");
-      return;
-    }
-  
-    // Parse the variables from project.templates (stored as JSON string)
-    let variables = {};
-    try {
-      // Support templates being stored as either a JSON string or an object
-      const parsed = typeof project.templates === "string"
-        ? JSON.parse(project.templates)
-        : project.templates;
-  
-      if (parsed && parsed.variables) {
-        for (const v of parsed.variables) {
-          variables[v.name] = v.value;
+// ../template-generation/overleafUploader.js
+
+/**
+ * Runs inside the Overleaf page context.
+ * Builds folders and uploads file contents using Overleaf’s DOM.
+ */
+ export async function uploadToOverleaf(files) {
+  console.log("[OverleafUploader] Starting upload...");
+
+  // Helper: wait for a selector
+  const waitFor = (selector, timeout = 5000) =>
+    new Promise((resolve, reject) => {
+      const start = Date.now();
+      const check = () => {
+        const el = document.querySelector(selector);
+        if (el) return resolve(el);
+        if (Date.now() - start > timeout) return reject(`Timeout waiting for ${selector}`);
+        requestAnimationFrame(check);
+      };
+      check();
+    });
+
+  /**
+   * Recursively uploads file/folder tree
+   */
+  async function uploadNode(node, parentPath = "") {
+    const fullPath = parentPath ? `${parentPath}/${node.name}` : node.name;
+
+    if (node.type === "folder") {
+      console.log(`📁 Creating folder: ${fullPath}`);
+
+      // Simulate “New Folder” in Overleaf
+      const newFolderButton = document.querySelector('[aria-label="New Folder"]');
+      if (newFolderButton) {
+        newFolderButton.click();
+        await new Promise(r => setTimeout(r, 400));
+
+        const input = document.querySelector('input[name="newFolderName"]');
+        if (input) {
+          input.value = node.name;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.blur();
         }
       }
-    } catch (e) {
-      console.error("Error parsing project variables:", e);
+
+      if (node.children && node.children.length) {
+        for (const child of node.children) {
+          await uploadNode(child, fullPath);
+        }
+      }
+    } else if (node.type === "file") {
+      console.log(`📝 Creating file: ${fullPath}`);
+      const newFileButton = document.querySelector('[aria-label="New File"]');
+      if (newFileButton) {
+        newFileButton.click();
+        await new Promise(r => setTimeout(r, 500));
+
+        const input = document.querySelector('input[name="newFileName"]');
+        if (input) {
+          input.value = node.name;
+          input.dispatchEvent(new Event("input", { bubbles: true }));
+          input.blur();
+        }
+
+        // Overleaf uses Monaco Editor for content — find and inject
+        const editor = document.querySelector(".monaco-editor textarea");
+        if (editor) {
+          editor.value = node.content || "";
+          editor.dispatchEvent(new Event("input", { bubbles: true }));
+        }
+
+        // Simulate save
+        const saveButton = document.querySelector('[aria-label="Save"]');
+        if (saveButton) saveButton.click();
+      }
     }
-  
-    console.log("Using project variables:", variables);
-  
-    // Choose the template (first for now)
-    const firstKey = Object.keys(templates)[0];
-    const template = templates[firstKey];
-    if (!template) {
-      console.error("No valid template selected.");
-      return;
-    }
-  
-    console.log("Building files for template:", template.name);
-    const files = await buildFileTree(template, variables);
-  
-    // Inject upload into Overleaf
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab.url.includes("overleaf.com")) {
-      console.error("Not on Overleaf tab.");
-      return;
-    }
-  
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: uploadToOverleaf,
-      args: [files]
-    });
-  
-    console.log(`Template "${template.name}" uploaded successfully to Overleaf.`);
   }
-  
+
+  for (const f of files) {
+    await uploadNode(f);
+  }
+
+  console.log("[OverleafUploader] Upload complete!");
+}

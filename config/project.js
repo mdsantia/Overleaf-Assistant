@@ -85,6 +85,76 @@ export async function initProjectView(projectId, readOnly = false) {
       alert(`Variables for template "${currentOpenTemplateId}" saved.`);
     };
   }
+
+  // -------------------- BACKUP FOLDER SELECTOR --------------------
+  const selectBtn = document.getElementById("selectFolderButton");
+  const folderDisplay = document.getElementById("folderName");
+  const folderInput = document.getElementById("folderInput");
+  if (!selectBtn || !folderDisplay || !folderInput) return;
+
+  // Disable everything if read-only mode
+  selectBtn.disabled = readOnlyMode;
+  folderInput.disabled = readOnlyMode;
+
+  // Load and show previously saved folder name (per project)
+  if (project.BackupFolderPath) {
+    folderDisplay.textContent = project.BackupFolderPath;
+  } else {
+    folderDisplay.textContent = "None";
+  }
+
+  // --- Modern browsers: use File System Access API ---
+  selectBtn.addEventListener("click", async () => {
+    if (readOnlyMode) return;
+
+    if ("showDirectoryPicker" in window) {
+      try {
+        const parentFolderHandle = await window.showDirectoryPicker();
+
+        // Create the "Overleaf Helper" subfolder
+        const helperFolderHandle = await parentFolderHandle.getDirectoryHandle("Overleaf Helper", { create: true });
+        const folderName = `${parentFolderHandle.name}/Overleaf Helper`;
+
+        // Display folder name
+        folderDisplay.textContent = folderName;
+
+        // Save safely to project store without overwriting others
+        project.BackupFolderPath = folderName;
+        projectStore[currentProjectId] = project;
+        await chrome.storage.local.set({ [storageKey]: projectStore });
+
+        console.log('Created "Overleaf Helper" folder in:', folderName);
+      } catch (err) {
+        console.error("Folder selection failed:", err);
+      }
+    } else {
+      // Fallback for browsers without File System Access API
+      folderInput.click();
+    }
+  });
+
+  // --- Fallback: webkitdirectory input handler ---
+  folderInput.addEventListener("change", async (event) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const relativePath = files[0].webkitRelativePath;
+    const baseFolder = relativePath ? relativePath.split("/")[0] : files[0].name;
+    const folderName = `${baseFolder}`;
+
+    // Update UI
+    folderDisplay.textContent = folderName;
+
+    // Save safely to Chrome storage per project
+    project.BackupFolderPath = folderName;
+    projectStore[currentProjectId] = project;
+    await chrome.storage.local.set({ [storageKey]: projectStore });
+
+    // Reset input (so user can reselect later)
+    event.target.value = "";
+
+    console.log('Fallback folder "Overleaf Helper" created in:', folderName);
+  });
 }
 
 

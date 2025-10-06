@@ -1,6 +1,10 @@
 // ==============================
 // Overleaf Helper Extension Background
 // ==============================
+import { buildFileTree } from "../template-generation/fileTreeBuilder.js";
+import { uploadToOverleaf } from "../template-generation/overleafUploader.js";
+import { downloadFilesAsZip } from "../template-generation/downloadFilesAsZip.js"
+
 
 // When the extension is installed
 chrome.runtime.onInstalled.addListener(() => {
@@ -100,7 +104,9 @@ function toggleView(command) {
 // ==============================
 // Upload Panel Integration
 // ==============================
-chrome.runtime.onMessage.addListener((message, sender) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  console.log("[Background] Message received:", message.action);
+
   if (message.action === "open-upload-panel") {
     const { projectId } = message;
 
@@ -121,23 +127,31 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 
   if (message.action === "build-and-upload-files") {
     const { projectId, templateId } = message;
-    chrome.storage.local.get(["configProjects", "template"], (data) => {
+  
+    chrome.storage.local.get(["configProjects", "template"], async (data) => {
       const project = (data.configProjects || {})[projectId];
-      const templateText = (data.template || {})[templateId];
-      if (!project || !templateText) {
-        console.error("Missing project or template for upload.");
+      const templateObj = (data.template || {})[templateId];
+  
+      if (!project || !templateObj) {
+        console.error("Missing project or template for download.");
         return;
       }
-
-      const vars = project.variables || {};
-      const processed = templateText.replace(/\$'([^']+)'\/\$/g, (_, v) => vars[v] || "");
-
-      console.log("Processed template for upload:", processed);
-
-      // TODO: Add uploadToOverleaf(processed)
+  
+      const vars = { ...project.variables };
+  
+      console.log("[Builder] Project variables:", vars);
+      console.log("[Builder] Template object:", templateObj);
+  
+      // Build file tree with variable substitution
+      const files = buildFileTree(templateObj.files, vars);
+  
+      console.log("[Builder] Built file tree:", files);
+  
+      // Download as ZIP
+      await downloadFilesAsZip(files, `${project.name.replace(/\s+/g, "_")}.zip`);
     });
-  }
-});
+  }  
+});  
 
 // ------------------------------
 // Inject Upload Panel
