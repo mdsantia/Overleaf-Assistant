@@ -4,7 +4,7 @@
  * Runs inside the Overleaf page context.
  * Builds folders and uploads file contents using Overleaf’s DOM.
  */
- export async function uploadToOverleaf(files) {
+ export default async function uploadToOverleaf(files) {
   console.log("[OverleafUploader] Starting upload...");
 
   // Helper: wait for a selector

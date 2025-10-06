@@ -6,7 +6,7 @@
  * @param {Object} vars - variables to replace, e.g., { hwnum: "5" }
  * @returns {Array} processed file/folder tree
  */
- export function buildFileTree(node, vars) {
+ export default function buildFileTree(node, vars) {
   // Helper to replace $var/$ in strings
   const replaceVars = (str) => {
     if (!str) return "";

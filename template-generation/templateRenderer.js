@@ -8,7 +8,7 @@
  * @param {Object} vars
  * @returns {string}
  */
- export function renderTemplate(text, vars) {
+ export default function renderTemplate(text, vars) {
   if (typeof text !== "string") return text;
 
   return text

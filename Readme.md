@@ -1,6 +1,6 @@
 # Overleaf Helper
 
-**Version:** 1.8.9  
+**Version:** 1.9.0  
 **Chrome Manifest Version:** 4  
 
 Overleaf Helper is a Chrome extension designed to **streamline and enhance your Overleaf workflow**. It simplifies project management, template handling, and customizations while providing keyboard shortcuts and offline backup integration.

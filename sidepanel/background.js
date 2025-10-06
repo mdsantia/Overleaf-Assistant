@@ -1,10 +1,7 @@
 // ==============================
 // Overleaf Helper Extension Background
 // ==============================
-import { buildFileTree } from "../template-generation/fileTreeBuilder.js";
-import { uploadToOverleaf } from "../template-generation/overleafUploader.js";
-import { downloadFilesAsZip } from "../template-generation/downloadFilesAsZip.js"
-
+import buildFileTree from "../template-generation/fileTreeBuilder.js";
 
 // When the extension is installed
 chrome.runtime.onInstalled.addListener(() => {
@@ -146,9 +143,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
       const files = buildFileTree(templateObj.files, vars);
   
       console.log("[Builder] Built file tree:", files);
-  
-      // Download as ZIP
-      await downloadFilesAsZip(files, `${project.name.replace(/\s+/g, "_")}.zip`);
+
     });
   }  
 });  

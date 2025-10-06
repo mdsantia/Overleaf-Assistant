@@ -28,7 +28,7 @@ function addFilesToZip(files, zip, parentPath = "") {
  * @param {Array} files - file/folder tree
  * @param {string} zipName - output ZIP filename
  */
-export async function downloadFilesAsZip(files, zipName) {
+export default async function downloadFilesAsZip(files, zipName) {
   const zip = new JSZip();
   addFilesToZip(files, zip);
   const content = await zip.generateAsync({ type: "blob" });
