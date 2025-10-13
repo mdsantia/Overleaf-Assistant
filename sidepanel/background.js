@@ -1,157 +1,201 @@
 // ==============================
-// Overleaf Helper Extension Background
+// Overleaf Helper Background Service Worker
 // ==============================
 import buildFileTree from "../template-generation/fileTreeBuilder.js";
 
-// When the extension is installed
+// ------------------------------
+// On install
+// ------------------------------
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Overleaf Helper extension installed.");
+  console.log("[Background] Overleaf Helper installed");
 });
 
 // ------------------------------
-// Keyboard command handlers
+// Command handlers (keyboard shortcuts)
 // ------------------------------
-chrome.commands.onCommand.addListener((command) => {
-  let functionName;
-  if (command === "open-files") functionName = toggleFileTree;
-  if (command === "toggle-forward" || command === "toggle-backward")
-    functionName = toggleView;
+chrome.commands.onCommand.addListener(async (command) => {
+  console.log("[Command]", command);
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab || !tab.url.includes("overleaf.com")) return;
 
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    const tab = tabs[0];
-    if (tab.url && tab.url.includes("overleaf.com")) {
-      chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: functionName,
-        args: [command],
-      });
-    } else {
-      console.log("This is not an Overleaf tab, skipping the command.");
-    }
-  });
+  if (command === "open-files") {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: ensureFileTreeOpen,
+    });
+  } else if (command === "toggle-forward" || command === "toggle-backward") {
+    await chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: toggleLayoutView,
+      args: [command],
+    });
+  }
 });
 
 // ------------------------------
-// Toggle File Tree
+// Helper: Ensure file tree open
 // ------------------------------
-function toggleFileTree() {
-  const closedButton = document.querySelector(
+function ensureFileTreeOpen() {
+  const togglerClosed = document.querySelector(
     ".custom-toggler.custom-toggler-west.custom-toggler-closed"
   );
-  const openButton = document.querySelector(
-    ".custom-toggler.custom-toggler-west.custom-toggler-west.custom-toggler-open"
-  );
-
-  if (closedButton) {
-    closedButton.click();
-    console.log("Clicked to show the file tree.");
-  } else if (openButton) {
-    openButton.click();
-    console.log("Clicked to hide the file tree.");
+  if (togglerClosed) {
+    togglerClosed.click();
+    console.log("[Content] File tree opened");
   } else {
-    console.log("File tree buttons not found.");
+    console.log("[Content] File tree already open");
   }
 }
 
 // ------------------------------
-// Toggle Layout View
+// Helper: Toggle layout view
 // ------------------------------
-function toggleView(command) {
-  const layoutDropdownBtn = document.querySelector("#layout-dropdown-btn");
-  if (layoutDropdownBtn && layoutDropdownBtn.getAttribute("aria-expanded") === "false") {
-    layoutDropdownBtn.click();
+function toggleLayoutView(command) {
+  const dropdownBtn = document.querySelector("#layout-dropdown-btn");
+  if (dropdownBtn && dropdownBtn.getAttribute("aria-expanded") === "false") {
+    dropdownBtn.click();
   }
-
   const dropdownMenu = document.querySelector(
     "#ide-root > div.ide-react-main > nav > div.toolbar-right > div.toolbar-item.layout-dropdown.dropdown > ul"
   );
-  if (!dropdownMenu) return console.error("Dropdown menu not found.");
+  if (!dropdownMenu) return console.error("Dropdown menu not found");
 
   const options = dropdownMenu.querySelectorAll("a.dropdown-item");
-  let currentOptionIndex = -1;
-  options.forEach((option, index) => {
-    if (option.classList.contains("active")) currentOptionIndex = index;
+  let currentIdx = -1;
+  options.forEach((opt, i) => {
+    if (opt.classList.contains("active")) currentIdx = i;
   });
-  if (currentOptionIndex === -1) return console.error("No selected layout found.");
+  if (currentIdx === -1) return console.error("No selected layout found");
 
-  let nextOptionIndex = currentOptionIndex;
+  let nextIdx = currentIdx;
   do {
-    if (command === "toggle-forward") {
-      nextOptionIndex = (nextOptionIndex + 1) % options.length;
-    } else if (command === "toggle-backward") {
-      nextOptionIndex = (nextOptionIndex - 1 + options.length) % options.length;
-    }
-  } while (options[nextOptionIndex].textContent.includes("PDF in separate tab"));
+    nextIdx =
+      command === "toggle-forward"
+        ? (nextIdx + 1) % options.length
+        : (nextIdx - 1 + options.length) % options.length;
+  } while (options[nextIdx].textContent.includes("PDF in separate tab"));
 
-  options[nextOptionIndex].click();
-
-  if (options[nextOptionIndex].textContent.includes("PDF only")) {
-    const pdfViewer = document.querySelector("#panel-pdf > div.pdf.full-size > div.pdf-viewer");
-    if (pdfViewer) {
-      pdfViewer.setAttribute("tabindex", "-1");
-      pdfViewer.focus();
-      console.log("PDF focused.");
-    }
-  } else {
-    const editor = document.querySelector(".cm-content");
-    if (editor) editor.focus();
-  }
+  options[nextIdx].click();
+  console.log("[Content] Layout toggled to", options[nextIdx].textContent);
 }
 
-// ==============================
-// Upload Panel Integration
-// ==============================
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-  console.log("[Background] Message received:", message.action);
+// ------------------------------
+// Upload Panel & File Handling
+// ------------------------------
+const panelState = {}; // per tab tracking
 
-  if (message.action === "open-upload-panel") {
-    const { projectId } = message;
+chrome.runtime.onMessage.addListener((message, sender) => {
+  if (!message?.action) return;
+  const tabId = sender.tab?.id;
 
-    chrome.storage.local.get(["configProjects", "template"], (data) => {
-      const configProjects = data.configProjects || {};
-      const savedTemplates = data.template || {};
-      const project = configProjects[projectId];
+  switch (message.action) {
+    case "toggle-upload-panel":
+      handleTogglePanel(tabId, message.projectId);
+      break;
 
-      if (!project) return console.error("No config for project:", projectId);
+    case "upload-panel-closed":
+      if (tabId) panelState[tabId] = false;
+      break;
 
-      chrome.scripting.executeScript({
-        target: { tabId: sender.tab.id },
-        func: injectUploadPanel,
-        args: [projectId, project, savedTemplates],
-      });
+    case "build-and-upload-files":
+      handleBuildAndUpload(tabId, message.projectId, message.templateId);
+      break;
+  }
+});
+
+// ------------------------------
+// Handle: Toggle upload panel
+// ------------------------------
+async function handleTogglePanel(tabId, projectId) {
+  if (!tabId) return;
+  const isOpen = panelState[tabId];
+
+  if (isOpen) {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const p = document.getElementById("overleaf-upload-panel");
+        if (p) p.remove();
+      },
     });
+    panelState[tabId] = false;
+    return;
   }
 
-  if (message.action === "build-and-upload-files") {
-    const { projectId, templateId } = message;
-  
-    chrome.storage.local.get(["configProjects", "template"], async (data) => {
-      const project = (data.configProjects || {})[projectId];
-      const templateObj = (data.template || {})[templateId];
-  
-      if (!project || !templateObj) {
-        console.error("Missing project or template for download.");
-        return;
-      }
-  
-      const vars = { ...project.variables };
-  
-      console.log("[Builder] Project variables:", vars);
-      console.log("[Builder] Template object:", templateObj);
-  
-      // Build file tree with variable substitution
-      const files = buildFileTree(templateObj.files, vars);
-  
-      console.log("[Builder] Built file tree:", files);
+  chrome.storage.local.get(["configProjects", "template"], async (data) => {
+    const configProjects = data.configProjects || {};
+    const templates = data.template || {};
+    const project = configProjects[projectId];
+    if (!project) return console.error("[Upload] Project not found");
 
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: injectUploadPanel,
+      args: [projectId, project, templates],
     });
-  }  
-});  
+    panelState[tabId] = true;
+  });
+}
+
+// ------------------------------
+// Handle: Build + Upload
+// ------------------------------
+async function handleBuildAndUpload(tabId, projectId, templateId) {
+  chrome.storage.local.get(["configProjects", "template"], async (data) => {
+    const project = (data.configProjects || {})[projectId];
+    const templateObj = (data.template || {})[templateId];
+
+    if (!project || !templateObj) {
+      console.error("[Upload] Missing project or template for upload.");
+      return;
+    }
+
+    console.log("[Upload] Opening file tree...");
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      func: () => {
+        const closed = document.querySelector(".custom-toggler.custom-toggler-west.custom-toggler-closed");
+        if (closed) closed.click();
+      },
+    });
+
+    console.log("[Upload] Building file tree...");
+    const vars = { ...project.variables };
+    const builtTree = buildFileTree(templateObj.files, vars);
+    console.log("[Upload] Built file tree", builtTree);
+
+    // inside your background.js where upload happens
+    console.log("[Upload] Uploading files to Overleaf...");
+
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["template-generation/overleafUploader.js"]
+    });
+
+    console.log("[Upload] Uploader script injected.");
+
+    // Give it a bit of time to register window.uploadFileTreeToOverleaf
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      args: [projectId, builtTree],
+      func: (projectId, fileTree) => {
+        if (window.uploadFileTreeToOverleaf) {
+          console.log("[Upload] Running uploader in Overleaf tab...");
+          window.uploadFileTreeToOverleaf(projectId, fileTree);
+        } else {
+          console.error("[Upload] Uploader not found in window context!");
+        }
+      }
+    });
+  });
+}
 
 // ------------------------------
 // Inject Upload Panel
 // ------------------------------
-function injectUploadPanel(projectId, project, savedTemplates) {
+function injectUploadPanel(projectId, project, templates) {
   const existing = document.getElementById("overleaf-upload-panel");
   if (existing) existing.remove();
 
@@ -162,13 +206,12 @@ function injectUploadPanel(projectId, project, savedTemplates) {
     top: "60px",
     right: "10px",
     width: "280px",
-    padding: "14px",
-    backgroundColor: "#1e1e1e",
+    background: "#1e1e1e",
     color: "#fff",
+    padding: "14px",
     borderRadius: "10px",
-    zIndex: "10000",
     boxShadow: "0 0 8px rgba(0,0,0,0.3)",
-    fontFamily: "sans-serif",
+    zIndex: "99999",
   });
 
   const title = document.createElement("div");
@@ -184,69 +227,51 @@ function injectUploadPanel(projectId, project, savedTemplates) {
     padding: "6px",
     borderRadius: "6px",
   });
-
-  const defaultOpt = document.createElement("option");
-  defaultOpt.textContent = "-- Select Template --";
-  defaultOpt.value = "";
-  dropdown.appendChild(defaultOpt);
-
+  const def = document.createElement("option");
+  def.textContent = "-- Select Template --";
+  dropdown.appendChild(def);
   (project.templates || []).forEach((tid) => {
-    const option = document.createElement("option");
-    option.value = tid;
-    option.textContent = savedTemplates[tid].name;
-    dropdown.appendChild(option);
+    const opt = document.createElement("option");
+    opt.value = tid;
+    opt.textContent = templates[tid]?.name || "Unnamed Template";
+    dropdown.appendChild(opt);
   });
-
-  // const textarea = document.createElement("textarea");
-  // Object.assign(textarea.style, {
-  //   width: "100%",
-  //   height: "100px",
-  //   borderRadius: "6px",
-  //   padding: "6px",
-  //   marginBottom: "10px",
-  // });
-  // textarea.placeholder = "Template content preview...";
   panel.appendChild(dropdown);
-  // panel.appendChild(textarea);
 
-  // dropdown.addEventListener("change", () => {
-  //   const tid = dropdown.value;
-  //   textarea.value = tid && savedTemplates[tid].files ? savedTemplates[tid].files || tid : "";
-  // });
-
-  const uploadBtn = document.createElement("button");
-  uploadBtn.textContent = "Build & Upload";
-  Object.assign(uploadBtn.style, {
+  const btn = document.createElement("button");
+  btn.textContent = "Build & Upload";
+  Object.assign(btn.style, {
     width: "100%",
     padding: "8px",
     backgroundColor: "#4CAF50",
-    color: "#fff",
     border: "none",
+    color: "white",
     borderRadius: "6px",
-    cursor: "pointer",
   });
-  uploadBtn.addEventListener("click", () => {
+  btn.onclick = () => {
     const tid = dropdown.value;
-    if (!tid) return alert("Please select a template first.");
+    if (!tid) return alert("Select a template first");
     chrome.runtime.sendMessage({
       action: "build-and-upload-files",
       projectId,
       templateId: tid,
     });
-  });
+  };
+  panel.appendChild(btn);
 
-  const closeBtn = document.createElement("div");
-  closeBtn.textContent = "×";
-  Object.assign(closeBtn.style, {
+  const close = document.createElement("div");
+  close.textContent = "×";
+  Object.assign(close.style, {
     position: "absolute",
     top: "6px",
     right: "10px",
     cursor: "pointer",
-    fontSize: "16px",
   });
-  closeBtn.addEventListener("click", () => panel.remove());
+  close.onclick = () => {
+    panel.remove();
+    chrome.runtime.sendMessage({ action: "upload-panel-closed" });
+  };
+  panel.appendChild(close);
 
-  panel.appendChild(uploadBtn);
-  panel.appendChild(closeBtn);
   document.body.appendChild(panel);
 }

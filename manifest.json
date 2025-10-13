@@ -1,6 +1,6 @@
 {
   "name": "Overleaf Helper",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "manifest_version": 3,
   "permissions": [
     "activeTab",
@@ -69,6 +69,7 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "template-generation/overleafUploader.js",
         "icons/upload-icon-128.png",
         "icons/nbg-icon-128.png"
       ],
