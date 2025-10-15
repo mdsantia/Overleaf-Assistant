@@ -7,6 +7,62 @@
     return match ? match[1] : null;
   }
 
+  function updateContainer(dropdown) {
+    dropdown.style.position = "static"; // disables absolute positioning 
+    dropdown.style.top = "auto"; 
+    dropdown.style.right = "auto";
+    
+    const clonedDropdown = document.getElementById("CLONE")?.querySelector("div");
+    const newDropdown = dropdown.cloneNode(true);
+    newDropdown.querySelector("ul")?.remove();
+    clonedDropdown.replaceWith(newDropdown);
+    const button = dropdown.querySelector("button");
+    const newButton = newDropdown.querySelector("button");
+    newButton.addEventListener('click', () => {
+      button.click();  // Trigger original dropdown
+    });
+    
+    // Hide the original button visually and from user interaction
+    button.style.opacity = "0";
+    button.style.pointerEvents = "none";
+    button.style.position = "absolute";
+    button.style.zIndex = "-1";
+
+    return button;
+  }
+
+  function displaceReview(container, toolbar) {
+    // Append DISPLACEMENT
+    const clonedContainer = container.cloneNode(true);
+    clonedContainer.id = "CLONE";
+    const gap = document.createElement('div');
+    gap.style.width = '16px';         // Adjust spacing as needed
+    gap.style.display = 'inline-block';  // Make sure it behaves like a spacer
+    gap.style.flexShrink = '0';       // Prevent collapsing if using flex
+
+    toolbar.appendChild(gap);
+    toolbar.appendChild(clonedContainer);
+
+    // MAKE SAVED COPY
+    let dropdown = container.querySelector("div");
+    const OGBUTTON = dropdown.querySelector("button")?.cloneNode(true);
+
+    // Update the dropdown
+    const button = updateContainer(dropdown);
+
+    // ---- MutationObserver to sync changes ----
+    const observer = new MutationObserver(() => {
+      dropdown.querySelector("button").style.cssText 
+        = OGBUTTON.style.cssText;
+      updateContainer(dropdown);
+    });
+
+    observer.observe(button, {
+      attributes: true,
+      attributeFilter: ['class'], // Watch class or other relevant attributes
+    });
+  }
+
   function createSaveIcon(projectId, isSavingEnabled) {
     const old = document.getElementById("overleaf-local-save-icon");
     if (old) old.remove();
@@ -63,13 +119,18 @@
       img.style.transform = "scale(1)";
     });
 
+    const projectName =
+      document.querySelector(
+        "#ide-root > div.ide-react-main > nav > div.project-name.toolbar-center > span"
+      )?.textContent.trim() || "Untitled Project";
     img.addEventListener("click", (e) => {
       if (e.shiftKey) {
-        toggleAutoSave(projectId);
+        toggleAutoSave(projectId, projectName);
       } else {
         chrome.runtime.sendMessage({
           action: "toggle-upload-panel",
           projectId,
+          projectName
         });
       }
     });
@@ -84,17 +145,12 @@
     else document.body.appendChild(container);
   }
 
-  function toggleAutoSave(projectId) {
+  function toggleAutoSave(projectId, projectName) {
     chrome.storage.local.get(["popProjects", "configProjects"], (data) => {
       const popProjects = data.popProjects || {};
       const configProjects = data.configProjects || {};
       const project = popProjects[projectId] || {};
-      const newState = !project.autoSave;
-
-      const projectName =
-        document.querySelector(
-          "#ide-root > div.ide-react-main > nav > div.project-name.toolbar-center > span"
-        )?.textContent.trim() || "Untitled Project";
+      const newState = !project.autoSave || false;
 
       popProjects[projectId] = { name: projectName, autoSave: newState };
       configProjects[projectId] = {
@@ -110,12 +166,12 @@
 
   function waitForToolbarAndInsertIcon(projectId, isSavingEnabled) {
     const tryInsert = () => {
-      // review document.querySelector("#panel-source-editor > div > div > div.cm-scroller > div.review-mode-switcher-container")
-      const toolbar = document.querySelector(
-        "#ide-root > div.ide-react-main > nav > div.toolbar-right"
-      );
-      if (toolbar) {
+      const container = document.querySelector(
+        "#panel-source-editor > div > div > div.cm-scroller > div.review-mode-switcher-container");
+      const toolbar = document.querySelector("#ol-cm-toolbar-wrapper > div > div.ol-cm-toolbar-button-group.ol-cm-toolbar-end");
+      if (toolbar && container) {
         createSaveIcon(projectId, isSavingEnabled);
+        displaceReview(container, toolbar);
         return true;
       }
       return false;

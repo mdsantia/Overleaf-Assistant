@@ -1,77 +1,21 @@
 document.addEventListener('DOMContentLoaded', () => {
-  // Retrieve the saved folder data
-  chrome.storage.local.get("selectedFolder", (data) => {
-    const selectedFolder = data.selectedFolder || null;
-    const folderNameElement = document.getElementById("folderName");
-
-    // If a folder is selected, show its name
-    if (selectedFolder) {
-      folderNameElement.textContent = selectedFolder.split('/').pop(); // Show folder name only
-    }
-  });
-
-  // Handle "Select Folder" button click
-  document.getElementById("selectFolderButton").addEventListener("click", () => {
-    if ('showDirectoryPicker' in window) {
-      // Use File System Access API to select a parent folder (modern browsers)
-      selectFolder();
-    } else {
-      // Fallback to using webkitdirectory for older browsers
-      document.getElementById("folderInput").click();  // Trigger the file input dialog
-    }
-  });
-
-  // File System Access API: Select Parent Folder and Create "Overleaf Helper" Folder
-  async function selectFolder() {
-    try {
-      // Open a directory picker to select a parent folder
-      const parentFolderHandle = await window.showDirectoryPicker();
-
-      // Create a folder named "Overleaf Helper" inside the selected parent directory
-      const overleafHelperFolder = await parentFolderHandle.getDirectoryHandle('Overleaf Helper', { create: true });
-
-      // Update the displayed folder name with the full path
-      const folderName = `${parentFolderHandle.name}/Overleaf Helper`;
-      document.getElementById("folderName").textContent = folderName;
-
-      // Save the selected folder path to chrome storage
-      chrome.storage.local.set({ selectedFolder: folderName });
-
-      console.log('Folder "Overleaf Helper" created in:', folderName);
-
-    } catch (err) {
-      console.error('Error selecting folder or creating directory:', err);
-    }
-  }
-
-  // Handle folder selection using webkitdirectory (for fallback)
-  document.getElementById("folderInput").addEventListener("change", (event) => {
-    const folderPath = event.target.files[0].webkitRelativePath.split('/')[0];  // Get folder name
-
-    // Create "Overleaf Helper" folder in the selected directory
-    const folderPathFull = `${folderPath}/Overleaf Helper`;
-
-    // Update the displayed folder name
-    document.getElementById("folderName").textContent = folderPathFull;
-
-    // Save the selected folder in the extension data
-    chrome.storage.local.set({ selectedFolder: folderPathFull });
-
-    // Clear the file input to prevent file upload behavior
-    event.target.value = "";
-
-    console.log('Folder "Overleaf Helper" created in:', folderPath);
-  });
-
   // Retrieve and display project data as in your original code
   chrome.storage.local.get("popProjects", (data) => {
     const popProjects = data.popProjects || {};  
     const projectListContainer = document.getElementById("pop-projectList");
+    const templateButton = document.getElementById("templates-button");
+    templateButton.innerHTML = "⚙️";
+    templateButton.classList.add("config-button");
+    templateButton.title = "Configure Templates";
+    templateButton.addEventListener("click", (event) => {
+      event.stopPropagation();
+      chrome.tabs.create({ url: chrome.runtime.getURL(`config/config.html`) });
+    });
     projectListContainer.innerHTML = "";  
   
     if (Object.keys(popProjects).length === 0) {
       const noProjectsMessage = document.createElement("p");
-      noProjectsMessage.textContent = "No projects found.";
+      noProjectsMessage.textContent = "No shortcut projects.";
       projectListContainer.appendChild(noProjectsMessage);
     } else {
       for (const projectId in popProjects) {

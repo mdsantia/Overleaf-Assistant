@@ -21,7 +21,7 @@ chrome.commands.onCommand.addListener(async (command) => {
   if (command === "open-files") {
     await chrome.scripting.executeScript({
       target: { tabId: tab.id },
-      func: ensureFileTreeOpen,
+      func: toggleFileTree,
     });
   } else if (command === "toggle-forward" || command === "toggle-backward") {
     await chrome.scripting.executeScript({
@@ -33,9 +33,9 @@ chrome.commands.onCommand.addListener(async (command) => {
 });
 
 // ------------------------------
-// Helper: Ensure file tree open
+// Helper: Toggle file tree
 // ------------------------------
-function ensureFileTreeOpen() {
+function toggleFileTree() {
   const togglerClosed = document.querySelector(
     ".custom-toggler.custom-toggler-west.custom-toggler-closed"
   );
@@ -43,7 +43,9 @@ function ensureFileTreeOpen() {
     togglerClosed.click();
     console.log("[Content] File tree opened");
   } else {
-    console.log("[Content] File tree already open");
+    const togglerOpened = document.querySelector("#ide-root > div.ide-react-main > div > div > div:nth-child(2) > div > button");
+    togglerOpened?.click();
+    console.log("[Content] File tree closed");
   }
 }
 
@@ -90,7 +92,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 
   switch (message.action) {
     case "toggle-upload-panel":
-      handleTogglePanel(tabId, message.projectId);
+      handleTogglePanel(tabId, message.projectId, message.projectName);
       break;
 
     case "upload-panel-closed":
@@ -106,7 +108,7 @@ chrome.runtime.onMessage.addListener((message, sender) => {
 // ------------------------------
 // Handle: Toggle upload panel
 // ------------------------------
-async function handleTogglePanel(tabId, projectId) {
+async function handleTogglePanel(tabId, projectId, projectName) {
   if (!tabId) return;
   const isOpen = panelState[tabId];
 
@@ -125,8 +127,17 @@ async function handleTogglePanel(tabId, projectId) {
   chrome.storage.local.get(["configProjects", "template"], async (data) => {
     const configProjects = data.configProjects || {};
     const templates = data.template || {};
-    const project = configProjects[projectId];
-    if (!project) return console.error("[Upload] Project not found");
+    let project = configProjects[projectId];
+
+    if (!project) {
+      project = {
+        name: projectName,
+      };
+      configProjects[projectId] = project;
+      chrome.storage.local.set({ configProjects }, () => {
+        console.log(`[Uploader] Project ${projectName} added!`);
+      });
+    }
 
     await chrome.scripting.executeScript({
       target: { tabId },
