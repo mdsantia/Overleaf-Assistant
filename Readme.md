@@ -1,7 +1,7 @@
-# Overleaf Helper
+# Overleaf Assistant
 
 **Version:** 1.9.2  
-**Chrome Manifest Version:** 4  
+**Chrome Manifest Version:** 3
 
 Overleaf Helper is a Chrome extension designed to **streamline and enhance your Overleaf workflow**. It simplifies project management, template handling, and customizations while providing keyboard shortcuts and offline backup integration.
 
@@ -17,6 +17,23 @@ Overleaf Helper is a Chrome extension designed to **streamline and enhance your 
 ### 2. Offline Backup & Synchronization
 - Integrates local backups for offline work.
 - Restore or sync your project data when back online.
+[Browser Extension] 
+      ⬇
+Intercepts Overleaf request (via webRequest)
+
+IF Online:
+    → Load https://www.overleaf.com/project/{id}
+ELSE:
+    → Redirect to chrome-extension://<extensionID>/local-overleaf/{projectID}
+          (Local Overleaf server instance)
+
+[Local Overleaf Server]
+  - Clone of the same project (via Git)
+  - Edits are saved locally
+  - Once back online:
+      - Git push to Overleaf
+      - Browser redirected back to Overleaf.com
+
 
 ### 3. Floating Sidepanel Shortcuts
 - Access frequently used shortcuts while working on any open Overleaf project.
