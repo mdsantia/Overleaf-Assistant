@@ -34,6 +34,22 @@ ELSE:
       - Git push to Overleaf
       - Browser redirected back to Overleaf.com
 
++---------------------------+
+|        Overleaf.com       |
+|  (Online Project Editing) |
++------------▲--------------+
+             │
+     [webRequest Intercept]
+             │
+     ┌───────┴────────┐
+     │  Offline Mode   │
+     │ local-overleaf/ │
+     └───────┬────────┘
+             │
+   chrome.local.storage (project list)
+             │
+      Local Git Repository
+
 
 ### 3. Floating Sidepanel Shortcuts
 - Access frequently used shortcuts while working on any open Overleaf project.
@@ -61,6 +77,8 @@ Overleaf-Helper/
 
 ├── icons/ # PNG icons of various sizes
 
+├── overleaf-ce/ # Original Overleaf repo code
+
 ├── sidepanel/ # Floating sidepanel with shortcuts for open projects
 
 │ ├── background.js
@@ -87,6 +105,15 @@ Overleaf-Helper/
 4. Click **Load unpacked** and select the extension directory.
 5. The Overleaf Helper icon should appear in your Chrome toolbar.
 
+### Update Overleaf Submodule
+```shell
+cd overleaf-ce
+git pull origin master
+cd ..
+git add overleaf-ce
+git commit -m "Update Overleaf submodule"
+```
+
 ---
 
 ## Usage
@@ -106,7 +133,7 @@ Overleaf-Helper/
 - `commands` – Handle keyboard shortcuts for fast navigation.
 - `storage` – Save project data, templates, and user preferences.
 - `fileSystem` – Support local backup integration.
-- `contextMenus` – Add right-click menu actions for enhanced workflow.
+- `nativeMessaging` – Support local-overleaf redirection.
 
 ---
 
@@ -120,16 +147,16 @@ Overleaf-Helper/
 
 ---
 
-## License
+<!-- ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT License. See [LICENSE](LICENSE) for details. -->
 
 ---
 
 ## Contact
 
-For questions, suggestions, or bug reports, reach out to **[Your Name]** at **[your-email@example.com]**.
+For questions, suggestions, or bug reports, reach out to **Micky Santiago-Zayas** at **[mdsantia@iastate.edu]**.
 
 ---
 
-Enhance your Overleaf workflow with **Overleaf Helper**: fast, customizable, and offline-ready! 🚀
+Enhance your Overleaf workflow with **Overleaf Assistant**: fast, customizable, and offline-ready! 🚀

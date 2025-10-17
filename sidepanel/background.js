@@ -10,6 +10,47 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log("[Background] Overleaf Helper installed");
 });
 
+// ===============================
+// Offline Overleaf Redirection
+// ===============================
+chrome.webRequest.onBeforeRequest.addListener(
+  (details) => {
+    const projectMatch = details.url.match(
+      /https:\/\/www\.overleaf\.com\/project\/([^/]+)/
+    );
+    if (!projectMatch) return;
+
+    const projectId = projectMatch[1];
+    return new Promise((resolve) => {
+      fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
+        .then(() => resolve({})) // online, do nothing
+        .catch(() => {
+          console.log(`[Offline] Redirecting project ${projectId} to local copy`);
+          resolve({
+            redirectUrl: chrome.runtime.getURL(
+              `local-overleaf/local-overleaf.html?project=${projectId}`
+            ),
+          });
+        });
+    });
+  },
+  { urls: ["*://www.overleaf.com/project/*"], types: ["main_frame"] },
+  ["blocking"]
+);
+
+// ===============================
+// Offline Sync Message Handler
+// (Step 6, placeholder for Step 5 Git logic)
+// ===============================
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.action === "syncProject") {
+    console.log(`[Sync] Received sync request for project ${msg.projectId}`);
+    // TODO: implement Git sync later (Step 5)
+    sendResponse({ success: true });
+  }
+});
+
+
 // ------------------------------
 // Command handlers (keyboard shortcuts)
 // ------------------------------

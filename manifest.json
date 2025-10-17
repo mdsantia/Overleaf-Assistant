@@ -7,10 +7,13 @@
     "scripting",
     "commands",
     "storage",
-    "downloads"
+    "downloads",
+    "webRequest",
+    "webRequestBlocking",
+    "tabs"
   ],
   "host_permissions": [
-    "https://www.overleaf.com/*"
+    "https://www.overleaf.com/*", "*/local-overleaf/*"
   ],
   "background": {
     "service_worker": "sidepanel/background.js",
@@ -69,6 +72,7 @@
   "web_accessible_resources": [
     {
       "resources": [
+        "local-overleaf/*", "overleaf-ce/*",
         "template-generation/overleafUploader.js",
         "icons/upload-icon-128.png",
         "icons/nbg-icon-128.png"
