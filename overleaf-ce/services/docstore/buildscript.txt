@@ -1,7 +1,0 @@
-docstore
---dependencies=mongo,gcs
---env-add=
---env-pass-through=
---esmock-loader=False
---node-version=22.18.0
---public-repo=True
