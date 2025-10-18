@@ -1,5 +1,5 @@
 // ==============================
-// Overleaf Helper Background Service Worker
+// Overleaf Assistant Background Service Worker
 // ==============================
 import buildFileTree from "../template-generation/fileTreeBuilder.js";
 
@@ -7,46 +7,146 @@ import buildFileTree from "../template-generation/fileTreeBuilder.js";
 // On install
 // ------------------------------
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("[Background] Overleaf Helper installed");
+  console.log("[Background] Overleaf Assistant installed");
 });
 
-// ===============================
-// Offline Overleaf Redirection
-// ===============================
+// Background service worker (background.js)
+
+// Offline detection and notification
+async function checkOnlineStatus() {
+  try {
+    const promises = [
+      fetch('https://www.overleaf.com/favicon.ico', { method: 'HEAD', mode: 'no-cors', cache: 'no-cache' }),
+      fetch('https://www.google.com/favicon.ico', { method: 'HEAD', mode: 'no-cors', cache: 'no-cache' })
+    ];
+    
+    await Promise.race(promises.map(p => 
+      new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => reject(new Error('timeout')), 3000);
+        p.then(() => {
+          clearTimeout(timeout);
+          resolve();
+        }).catch(reject);
+      })
+    ));
+    
+    return true; // online
+  } catch {
+    return false; // offline
+  }
+}
+
 chrome.webRequest.onBeforeRequest.addListener(
   (details) => {
-    const projectMatch = details.url.match(
-      /https:\/\/www\.overleaf\.com\/project\/([^/]+)/
-    );
-    if (!projectMatch) return;
-
-    const projectId = projectMatch[1];
-    return new Promise((resolve) => {
-      fetch("https://www.google.com", { method: "HEAD", mode: "no-cors" })
-        .then(() => resolve({})) // online, do nothing
-        .catch(() => {
-          console.log(`[Offline] Redirecting project ${projectId} to local copy`);
-          resolve({
-            redirectUrl: chrome.runtime.getURL(
-              `local-overleaf/local-overleaf.html?project=${projectId}`
-            ),
+    checkOnlineStatus().then(online => {
+      if (!online) {
+        console.log(`[Offline] User is offline when accessing: ${details.url}`);
+        chrome.tabs.query({ url: "*://www.overleaf.com/project/*" }, (tabs) => {
+          tabs.forEach(tab => {
+            chrome.tabs.sendMessage(tab.id, { action: "offlineDetected", url: details.url });
           });
         });
+      } else {
+        console.log(`[Online] Accessing: ${details.url}`);
+      }
     });
+    return {};
   },
-  { urls: ["*://www.overleaf.com/project/*"], types: ["main_frame"] },
-  ["blocking"]
+  { urls: ["*://www.overleaf.com/project/*"], types: ["main_frame"] }
 );
 
 // ===============================
-// Offline Sync Message Handler
-// (Step 6, placeholder for Step 5 Git logic)
+// Enhanced Sync & Project Management
 // ===============================
+
+class ProjectSyncManager {
+  constructor() {
+    this.syncQueue = new Map();
+    this.syncInProgress = new Set();
+  }
+
+  async syncProject(projectId, files) {
+    if (this.syncInProgress.has(projectId)) {
+      console.log(`[Sync] Sync already in progress for project ${projectId}`);
+      return { success: false, error: 'Sync already in progress' };
+    }
+
+    this.syncInProgress.add(projectId);
+
+    try {
+      console.log(`[Sync] Starting sync for project ${projectId}`);
+      
+      // Store the files data for potential future use
+      await this.storeProjectFiles(projectId, files);
+      
+      // Simulate sync (replace with real API upload)
+      await this.simulateSync();
+      
+      console.log(`[Sync] Successfully synced project ${projectId}`);
+      return { success: true };
+      
+    } catch (error) {
+      console.error(`[Sync] Failed to sync project ${projectId}:`, error);
+      return { success: false, error: error.message };
+    } finally {
+      this.syncInProgress.delete(projectId);
+    }
+  }
+
+  async storeProjectFiles(projectId, files) {
+    const syncData = {
+      projectId,
+      files,
+      lastSync: Date.now(),
+      syncStatus: 'pending'
+    };
+    
+    await chrome.storage.local.set({ 
+      [`sync_${projectId}`]: syncData 
+    });
+  }
+
+  async simulateSync() {
+    // Simulate network delay
+    return new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  async getProjectSyncStatus(projectId) {
+    const data = await chrome.storage.local.get([`sync_${projectId}`]);
+    return data[`sync_${projectId}`] || null;
+  }
+
+  async clearSyncData(projectId) {
+    await chrome.storage.local.remove([`sync_${projectId}`]);
+  }
+}
+
+const syncManager = new ProjectSyncManager();
+
+// ===============================
+// Message listener for sync commands
+// ===============================
+
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.action === "syncProject") {
-    console.log(`[Sync] Received sync request for project ${msg.projectId}`);
-    // TODO: implement Git sync later (Step 5)
-    sendResponse({ success: true });
+    syncManager.syncProject(msg.projectId, msg.files)
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true; // async response
+  }
+  
+  if (msg.action === "getSyncStatus") {
+    syncManager.getProjectSyncStatus(msg.projectId)
+      .then(status => sendResponse({ status }))
+      .catch(error => sendResponse({ error: error.message }));
+    return true;
+  }
+  
+  if (msg.action === "clearSync") {
+    syncManager.clearSyncData(msg.projectId)
+      .then(() => sendResponse({ success: true }))
+      .catch(error => sendResponse({ success: false, error: error.message }));
+    return true;
   }
 });
 

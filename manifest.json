@@ -1,11 +1,8 @@
 {
-  "name": "Overleaf Helper",
+  "name": "Overleaf Assistant",
   "version": "1.9.2",
   "manifest_version": 3,
   "permissions": [
-    "activeTab",
-    "scripting",
-    "commands",
     "storage",
     "downloads",
     "webRequest",
@@ -13,13 +10,18 @@
     "tabs"
   ],
   "host_permissions": [
-    "https://www.overleaf.com/*", "*/local-overleaf/*"
+    "https://www.overleaf.com/*"
   ],
   "background": {
     "service_worker": "sidepanel/background.js",
     "type": "module"
   },
   "content_scripts": [
+    {
+      "matches": ["https://www.overleaf.com/project/*"],
+      "js": ["cache/api-logger-injector.js"],
+      "run_at": "document_start"
+    },
     {
       "matches": ["https://www.overleaf.com/project/*"],
       "js": ["sidepanel/content.js"],
@@ -72,10 +74,10 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "local-overleaf/*", "overleaf-ce/*",
         "template-generation/overleafUploader.js",
         "icons/upload-icon-128.png",
-        "icons/nbg-icon-128.png"
+        "icons/nbg-icon-128.png",
+        "cache/api-logger-main-world.js"
       ],
       "matches": [
         "https://www.overleaf.com/*"

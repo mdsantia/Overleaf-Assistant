@@ -3,7 +3,7 @@
 **Version:** 1.9.2  
 **Chrome Manifest Version:** 3
 
-Overleaf Helper is a Chrome extension designed to **streamline and enhance your Overleaf workflow**. It simplifies project management, template handling, and customizations while providing keyboard shortcuts and offline backup integration.
+Overleaf Assistant is a Chrome extension designed to **streamline and enhance your Overleaf workflow**. It simplifies project management, template handling, and customizations while providing keyboard shortcuts and offline backup integration.
 
 ---
 
@@ -26,6 +26,10 @@ IF Online:
 ELSE:
     → Redirect to chrome-extension://<extensionID>/local-overleaf/{projectID}
           (Local Overleaf server instance)
+
+So that 
+Normal:     [Overleaf UI] → [Network] → [Overleaf API] → [Database]
+Our Approach: [Overleaf UI] → [Interceptor] → [Local Cache] → [Chrome Storage]
 
 [Local Overleaf Server]
   - Clone of the same project (via Git)
@@ -103,14 +107,11 @@ Overleaf-Helper/
 2. Open Chrome and navigate to `chrome://extensions/`.
 3. Enable **Developer mode** (top right corner).
 4. Click **Load unpacked** and select the extension directory.
-5. The Overleaf Helper icon should appear in your Chrome toolbar.
+5. The Overleaf Assistant icon should appear in your Chrome toolbar.
 
 ### Update Overleaf Submodule
 ```shell
-cd overleaf-ce
-git pull origin master
-cd ..
-git add overleaf-ce
+git submodule update --init --recursive
 git commit -m "Update Overleaf submodule"
 ```
 

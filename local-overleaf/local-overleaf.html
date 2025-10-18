@@ -2,18 +2,111 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Offline Overleaf</title>
-  <link rel="stylesheet" href="../overleaf-ce/static/css/editor.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overleaf (Offline)</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/darcula.min.css">
 </head>
 <body>
-  <div id="offline-banner">
-    📴 Offline Mode — Edits will be saved locally
+  <!-- Top Navigation Bar -->
+  <nav class="top-nav">
+    <div class="nav-left">
+      <div class="logo">
+        <img src="../icons/nbg-icon-48.png" alt="Overleaf" class="logo-icon">
+        <span class="project-name" id="project-name">Loading...</span>
+      </div>
+    </div>
+    <div class="nav-center">
+      <div id="status-banner" class="status-offline">
+        🔴 Offline Mode — Changes saved locally
+      </div>
+    </div>
+    <div class="nav-right">
+      <button id="sync-btn" class="btn btn-primary" disabled>
+        <span id="sync-text">Sync when online</span>
+      </button>
+      <button id="settings-btn" class="btn btn-secondary">
+        ⚙️
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main Editor Layout -->
+  <div class="editor-layout">
+    <!-- File Tree Sidebar -->
+    <div class="sidebar" id="file-tree-sidebar">
+      <div class="sidebar-header">
+        <h3>Files</h3>
+        <button id="add-file-btn" class="btn-icon" title="Add new file">
+          ➕
+        </button>
+      </div>
+      <div class="file-tree" id="file-tree">
+        <!-- Files will be populated here -->
+      </div>
+    </div>
+
+    <!-- Editor Panel -->
+    <div class="editor-panel">
+      <div class="editor-tabs" id="editor-tabs">
+        <!-- Tabs will appear here -->
+      </div>
+      <div class="editor-content">
+        <div id="editor-placeholder" class="editor-placeholder">
+          Select a file to start editing
+        </div>
+        <div id="code-editor" class="code-editor" style="display: none;"></div>
+      </div>
+    </div>
+
+    <!-- PDF Preview Panel (Optional) -->
+    <div class="preview-panel" id="preview-panel" style="display: none;">
+      <div class="preview-header">
+        <h3>Preview</h3>
+        <button id="toggle-preview" class="btn-icon">
+          👁️
+        </button>
+      </div>
+      <div class="preview-content">
+        <div class="preview-placeholder">
+          PDF preview not available in offline mode
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div id="editor-container"></div>
+  <!-- Context Menu -->
+  <div id="context-menu" class="context-menu" style="display: none;">
+    <div class="context-item" data-action="rename">Rename</div>
+    <div class="context-item" data-action="delete">Delete</div>
+    <div class="context-separator"></div>
+    <div class="context-item" data-action="download">Download</div>
+  </div>
 
-  <script src="../overleaf-ce/static/js/editor.js"></script>
+  <!-- Add File Modal -->
+  <div id="add-file-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Add New File</h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="new-file-name" placeholder="Enter file name (e.g., main.tex)" class="input-field">
+      </div>
+      <div class="modal-footer">
+        <button id="create-file-btn" class="btn btn-primary">Create</button>
+        <button class="modal-close btn btn-secondary">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/stex/stex.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
   <script src="local-overleaf.js"></script>
 </body>
 </html>
