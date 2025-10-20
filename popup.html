@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <title>Overleaf Helper Extension</title>
   <script src="popup.js" type="module"></script>
   <style>
@@ -13,6 +14,22 @@
       font-size: 14px;
       opacity: 0;
       transition: opacity 0.2s ease-in-out;
+    }
+    .settings-button {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      opacity: 0.8;
+      transition: opacity 0.2s ease-in-out;
+      color: black;
+      font-size: 12px;
+      padding: 0;
+      margin: 0;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-weight: bold;
     }
 
     .trash-button {
@@ -29,7 +46,7 @@
 
     .project-item:hover .trash-button,
     .project-item:hover .pdf-button,
-    .project-item:hover .config-button {
+    .project-item:hover .config-button, .settings-button {
       opacity: 1;
     }
 
@@ -145,13 +162,8 @@
 </head>
 <body>
   <h3>Overleaf Helper</h3>
-  <p>Manage local saving for your projects:</p>
+  <!-- <p>Shortcut projects:</p> -->
   <!-- Link to Overleaf Projects -->      
-  <div class="overleaf-link">
-    <a href="#" id="openOverleafLink">Your Overleaf Projects</a>
-    <button id="templates-button">⚙️</button>
-  </div>
-
   <div class="project-list" id="pop-projectList">
     <!-- Example item -->
     <div class="project-item">
@@ -163,11 +175,16 @@
       </div>
     </div>
   </div>
-
+  
+  <button class="settings-button" id="settings-button">⚙️</button>
   <button id="closeButton" class="close-button">&times;</button>
+
+  <div class="overleaf-link">
+    <a href="#" id="openOverleafLink">Your Overleaf Projects</a>
+  </div>
   
   <div class="footer">
-    <p>Overleaf Helper v1.9.2</p>
+    <p>Overleaf Helper v1.9.3</p>
   </div>
 </body>
 </html>

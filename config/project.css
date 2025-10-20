@@ -3,59 +3,60 @@
    accent: rgb(0,153,68)
 */
 
-:root{
-    --bg: #0f0f10;                /* very dark background */
-    --panel: #121215;             /* panel background */
-    --muted: #9ca3a8;             /* muted text */
-    --border: #232427;            /* subtle borders */
-    --card: #0b0b0c;              /* cards */
-    --surface: #141416;           /* editor surface */
-    --text: #ffffff;              /* primary text */
-    --accent: rgb(0,153,68);      /* requested green accent */
-    --danger: #d9534f;            /* delete red (used sparingly) */
-    --glass: rgba(255,255,255,0.02);
-    --radius: 10px;
-    --shadow-1: 0 6px 18px rgba(0,0,0,0.6);
-    font-synthesis: none;
-  }
-  
-  /* page baseline */
+:root {
+  --bg: #0d0e10;                  /* Slightly warmer black */
+  --panel: #18191d;               /* Panel background with better contrast */
+  --muted: #b2b7bc;               /* Brighter muted text */
+  --border: #2a2c30;              /* More visible border */
+  --card: #151619;                /* Card surface */
+  --surface: #1a1c1f;             /* Right panel surface */
+  --text: #ffffff;
+  --accent: #00b060;              /* slightly brighter green */
+  --accent-soft: rgba(0,176,96,0.1);
+  --danger: #e15855;
+  --glass: rgba(255,255,255,0.04);
+  --radius: 10px;
+  --shadow-1: 0 6px 18px rgba(0,0,0,0.55);
+}
+
+/* page baseline */
   * { box-sizing: border-box; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
-  html,body { height:100%; margin:0; background: linear-gradient(180deg, var(--bg) 0%, #050506 100%); color:var(--text); font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; font-size:14px; }
+  html,body {background: linear-gradient(180deg, var(--bg) 0%, #050506 100%); color:var(--text);}
   
   /* outer layout */
-  .app {
-    display: grid;
-    grid-template-columns: 360px 1fr;
-    gap: 20px;
-    height: 100vh;
-    padding: 20px;
-    align-items: start;
+  .subapp {
+    display: flex;
+    flex-direction: row;
+    gap: 24px;
+    height: 100%;
+    width: 100%;
+    align-items: flex-start;
+    margin-bottom: 40px;
   }
   
-  /* Sidebar (left) */
-  .sidebar {
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  /* Subsidebar (left) */
+  .subsidebar {
+    background: linear-gradient(180deg, #202226 0%, #16171a 100%);
     border: 1px solid var(--border);
     border-radius: calc(var(--radius) + 2px);
     padding: 18px;
     box-shadow: var(--shadow-1);
-    overflow-y: auto;
-    min-height: 0; /* allow scroll */
+  }  
+  
+  .submain {
+    flex: 1;
+    min-width: 0; /* Very important for long text or code not to break layout */
   }
   
   /* Section card */
-  .config-section {
-    background: linear-gradient(180deg, var(--card), rgba(255,255,255,0.01));
-    border-radius: var(--radius);
-    padding: 14px;
-    margin-bottom: 16px;
-    border: 1px solid rgba(255,255,255,0.02);
-    width: 100%;
-  }
+  .config-section-card {
+    background: linear-gradient(180deg, #1c1e21 0%, #151619 100%);
+    border: 1px solid rgba(255,255,255,0.05);
+  }  
+  
   
   /* Headings */
-  .config-section h2 {
+  .config-section-card h2 {
     margin: 0 0 10px 0;
     font-weight: 600;
     color: var(--text);
@@ -68,9 +69,11 @@
   }
   
   /* labels and inputs */
-  label { display: block; color: var(--muted); font-size: 13px; margin: 8px 0 4px; }
+  label, .template-usage .meta, .helper, .folder-item, .variable-item {
+    color: var(--border);
+  }  
   input[type="text"], select, textarea {
-    background: transparent;
+    background: var(--border);
     border: 1px solid rgba(255,255,255,0.04);
     color: var(--text);
     padding: 10px 12px;
@@ -136,36 +139,6 @@
   
   /* styled checkbox row */
   .checkbox-row { display:flex; align-items:center; gap:10px; color: var(--muted); }
-  
-  /* small action buttons */
-  button, .btn {
-    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
-    color: var(--text);
-    border: 1px solid rgba(255,255,255,0.03);
-    padding: 8px 12px;
-    border-radius: 8px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 13px;
-    transition: transform .06s ease, background .08s ease, box-shadow .08s ease;
-  }
-  button:hover, .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.55); }
-  button:active, .btn:active { transform: translateY(0); }
-  
-  /* primary accent button */
-  .btn-primary {
-    background: linear-gradient(180deg, var(--accent), rgba(0,153,68,0.86));
-    color: #fff;
-    border: none;
-    box-shadow: 0 6px 18px rgba(0,153,68,0.12);
-  }
-  .btn-primary:hover { filter: brightness(.98); }
-  
-  /* secondary (ghost) */
-  .btn-ghost {
-    background: transparent;
-    border: 1px dashed rgba(255,255,255,0.06);
-  }
   
   /* Danger zone */
   .danger-zone {
@@ -258,56 +231,53 @@
   }
   fieldset legend { font-size:12px; color:var(--muted); padding:0 6px; }
   
-  /* File Editor (right panel) */
-  .file-editor {
-    background: linear-gradient(180deg, var(--surface), rgba(255,255,255,0.01));
-    border-radius: calc(var(--radius) + 2px);
-    border: 1px solid rgba(255,255,255,0.03);
-    display:flex;
-    flex-direction:column;
-    min-height: 0; /* allow internal scroll */
-    box-shadow: var(--shadow-1);
-    overflow: hidden;
-  }
+  /* variable Editor (right panel) */
+  .variable-editor-header {
+    background: linear-gradient(180deg, #2a2d31 0%, #1a1c1f 100%);
+    color: var(--text);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }  
   
   /* Header */
-  .file-editor-header {
-    padding: 16px 18px;
+  .variable-editor-header, h1 {
+    padding: 5px;
+    width: 100%;
     border-bottom: 1px solid rgba(255,255,255,0.02);
     display:flex;
     align-items:center;
     justify-content:space-between;
+    font-size:18px;
+    color:var(--text);
   }
-  .file-editor-header h2 { margin:0; font-size:13px; color:var(--text); }
   
   /* editor content */
-  .editor-content { flex:1; margin:12px 0; }
+  .editor-content { flex:1; margin:5px 0; }
 
   .save-button {
-    align-self:flex-start;
+    width: 100%;
     background:var(--accent);
     color:#fff;
     border:none;
     padding:8px 14px;
     border-radius:6px;
+    display:none;
   }
   
   /* variable card */
   .var-card {
     background: linear-gradient(180deg, rgba(255,255,255,0.015), transparent);
     border: 1px solid rgba(255,255,255,0.02);
-    padding: 12px;
+    padding: 5px;
     border-radius: 8px;
-    margin-bottom: 12px;
   }
   .var-card h3 { margin:0 0 6px 0; font-size:13px; color:var(--text); }
   .var-card p { margin:0; color:var(--muted); font-size:13px; }
   
   /* single open variable visual focus */
   .var-card.active {
-    border-color: rgba(0,153,68,0.22);
-    box-shadow: 0 10px 30px rgba(0,153,68,0.04);
-  }
+    border-color: rgba(0,176,96,0.3);
+    box-shadow: 0 8px 22px rgba(0,176,96,0.08);
+  }  
   
   /* save area */
   .editor-actions {
@@ -329,8 +299,8 @@
   .kv .v { flex:1; }
   
   /* preview tree nodes (re-using your markup) */
-  .file-tree { padding: 6px; }
-  .folder-item, .file-item {
+  .variable-tree { padding: 6px; }
+  .folder-item, .variable-item {
     padding: 8px 10px;
     border-radius: 8px;
     margin: 6px 0;
@@ -338,14 +308,26 @@
     color: var(--muted);
   }
   .folder-item { cursor:pointer; border: 1px solid rgba(255,255,255,0.02); background: rgba(255,255,255,0.01); }
-  .folder-item.open { border-color: rgba(0,153,68,0.12); color:var(--text); }
+  .folder-item.open, .template-usage:hover {
+    background: var(--accent-soft);
+    border-color: rgba(0,176,96,0.25);
+    color: var(--text);
+  }  
   
   /* small responsive tweaks */
-  @media (max-width:1000px) {
-    .app { grid-template-columns: 1fr; grid-auto-rows: auto; padding: 14px; gap:12px; }
-    .sidebar { order:2; }
-    .file-editor { order:1; min-height: 60vh; }
+  /* Default for wide screens */
+
+/* Responsive stacking layout */
+@media (max-width: 1000px) {
+  .subapp {
+    flex-direction: column;
   }
+
+  .subsidebar, .submain {
+    width: 100%;
+    max-width: 100%;
+  }
+}
   
   /* focus outlines for keyboard users */
   :focus { outline: none; box-shadow: 0 0 0 3px rgba(0,153,68,0.08); border-radius:6px; }

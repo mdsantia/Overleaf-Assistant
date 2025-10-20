@@ -1,6 +1,42 @@
 // ==============================
 // Overleaf Helper Content Script
 // ==============================
+let cachedShortcuts = null;
+
+function loadShortcuts(callback) {
+  if (cachedShortcuts) {
+    callback(cachedShortcuts);
+  } else {
+    chrome.runtime.sendMessage({ type: "get-shortcuts" }, (response) => {
+      cachedShortcuts = response;
+      callback(cachedShortcuts);
+    });
+  }
+}
+
+document.addEventListener("keydown", (e) => {
+  loadShortcuts((shortcuts) => {
+    const matchedCommand = Object.entries(shortcuts).find(([command, shortcut]) => {
+      return (
+        shortcut.key.toUpperCase() === e.key.toUpperCase() &&
+        shortcut.ctrl === e.ctrlKey &&
+        shortcut.shift === e.shiftKey &&
+        shortcut.alt === e.altKey &&
+        shortcut.meta === e.metaKey
+        );
+      });
+      
+      if (matchedCommand) {
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      chrome.runtime.sendMessage({
+        type: "key-pressed",
+        command: matchedCommand[0]
+      });
+    }
+  });
+}, true);
+
 (() => {
   function getProjectIdFromUrl(url) {
     const match = url.match(/https:\/\/www\.overleaf\.com\/project\/([\w-]+)/);
@@ -8,59 +44,70 @@
   }
 
   function updateContainer(dropdown) {
-    dropdown.style.position = "static"; // disables absolute positioning 
+    dropdown.style.position = "static"; 
     dropdown.style.top = "auto"; 
     dropdown.style.right = "auto";
-    
+  
     const clonedDropdown = document.getElementById("CLONE")?.querySelector("div");
     const newDropdown = dropdown.cloneNode(true);
     newDropdown.querySelector("ul")?.remove();
-    clonedDropdown.replaceWith(newDropdown);
+  
+    if (clonedDropdown) {
+      clonedDropdown.replaceWith(newDropdown);
+    } else {
+      console.warn("[Overleaf Helper] CLONE not found — skipping replaceWith");
+    }
+  
     const button = dropdown.querySelector("button");
     const newButton = newDropdown.querySelector("button");
-    newButton.addEventListener('click', () => {
-      button.click();  // Trigger original dropdown
-    });
-    
-    // Hide the original button visually and from user interaction
-    button.style.opacity = "0";
-    button.style.pointerEvents = "none";
-    button.style.position = "absolute";
-    button.style.zIndex = "-1";
-
+    if (newButton && button) {
+      newButton.addEventListener('click', () => {
+        button.click();
+      });
+    }
+  
+    if (button) {
+      button.style.opacity = "0";
+      button.style.pointerEvents = "none";
+      button.style.position = "absolute";
+      button.style.zIndex = "-1";
+    }
+  
     return button;
-  }
+  }  
 
   function displaceReview(container, toolbar) {
-    // Append DISPLACEMENT
     const clonedContainer = container.cloneNode(true);
     clonedContainer.id = "CLONE";
     const gap = document.createElement('div');
-    gap.style.width = '16px';         // Adjust spacing as needed
-    gap.style.display = 'inline-block';  // Make sure it behaves like a spacer
-    gap.style.flexShrink = '0';       // Prevent collapsing if using flex
+    gap.style.width = '16px';
+    gap.style.display = 'inline-block';
+    gap.style.flexShrink = '0';
+    
+    const div = document.createElement('div');
+    div.style.display = 'flex';
+    div.style.flexShrink = '0';
+    div.width = "auto"
+    div.id = 'DISPLACED';
+    div.appendChild(gap);
+    div.appendChild(clonedContainer);
+    toolbar.appendChild(div);
 
-    toolbar.appendChild(gap);
-    toolbar.appendChild(clonedContainer);
-
-    // MAKE SAVED COPY
-    let dropdown = container.querySelector("div");
-    const OGBUTTON = dropdown.querySelector("button")?.cloneNode(true);
-
-    // Update the dropdown
-    const button = updateContainer(dropdown);
-
-    // ---- MutationObserver to sync changes ----
-    const observer = new MutationObserver(() => {
-      dropdown.querySelector("button").style.cssText 
-        = OGBUTTON.style.cssText;
-      updateContainer(dropdown);
-    });
-
-    observer.observe(button, {
-      attributes: true,
-      attributeFilter: ['class'], // Watch class or other relevant attributes
-    });
+    let dropdown = container.querySelector("div > div");
+    if (dropdown) {
+      const OGBUTTON = dropdown.querySelector("button")?.cloneNode(true);
+      const button = updateContainer(dropdown);
+  
+      const observer = new MutationObserver(() => {
+        dropdown.querySelector("button").style.cssText = OGBUTTON.style.cssText;
+        updateContainer(dropdown);
+      });
+  
+      observer.observe(button, {
+        attributes: true,
+        attributeFilter: ['class']
+      });
+    }
   }
 
   function createSaveIcon(projectId, isSavingEnabled) {
@@ -149,13 +196,18 @@
     chrome.storage.local.get(["popProjects", "configProjects"], (data) => {
       const popProjects = data.popProjects || {};
       const configProjects = data.configProjects || {};
-      const project = popProjects[projectId] || {};
-      const newState = !project.autoSave || false;
+      const project = configProjects[projectId] || {};
+      const newState = project.localBackup ? !project.localBackup : true;
 
-      popProjects[projectId] = { name: projectName, autoSave: newState };
+      if (newState) {
+        popProjects[projectId] = { };
+      } else {
+        delete popProjects[projectId];
+      }
       configProjects[projectId] = {
-        ...configProjects[projectId],
+        ...project,
         name: projectName,
+        localBackup: newState
       };
       chrome.storage.local.set({ popProjects, configProjects }, () => {
         console.log(`[AutoSave] ${newState ? "Enabled" : "Disabled"} for ${projectName}`);
@@ -167,8 +219,11 @@
   function waitForToolbarAndInsertIcon(projectId, isSavingEnabled) {
     const tryInsert = () => {
       const container = document.querySelector(
-        "#panel-source-editor > div > div > div.cm-scroller > div.review-mode-switcher-container");
-      const toolbar = document.querySelector("#ol-cm-toolbar-wrapper > div > div.ol-cm-toolbar-button-group.ol-cm-toolbar-end");
+        "#panel-source-editor > div > div > div.cm-scroller > div.review-mode-switcher-container"
+        );
+        const toolbar = document.querySelector(
+          "#ol-cm-toolbar-wrapper > div.ol-cm-toolbar.toolbar-editor > div.ol-cm-toolbar-button-group.ol-cm-toolbar-end"
+          );
       if (toolbar && container) {
         createSaveIcon(projectId, isSavingEnabled);
         displaceReview(container, toolbar);
@@ -187,10 +242,12 @@
 
   const projectId = getProjectIdFromUrl(window.location.href);
   if (projectId) {
-    chrome.storage.local.get("popProjects", (data) => {
-      const isSavingEnabled = data.popProjects?.[projectId]?.autoSave || false;
+    chrome.storage.local.get("configProjects", (data) => {
+      const projects = data.configProjects || {};   // fallback to empty object
+      const project = projects[projectId];
+      const isSavingEnabled = project ? project.localBackup : false;
       waitForToolbarAndInsertIcon(projectId, isSavingEnabled);
-    });
+    });    
   } else {
     console.error("[Overleaf Helper] No project ID detected");
   }

@@ -3,12 +3,200 @@
 // ==============================
 import buildFileTree from "../template-generation/fileTreeBuilder.js";
 
-// ------------------------------
-// On install
-// ------------------------------
+const defaultShortcuts = {
+  "toggle-file-tree": {
+    key: "h", ctrl: true, shift: false, alt: false, meta: false
+  },
+  "only-editor": {
+    key: "ArrowRight", ctrl: true, shift: true, alt: false, meta: false
+  },
+  "only-pdf": {
+    key: "ArrowLeft", ctrl: true, shift: true, alt: false, meta: false
+  },
+  "editor-pdf": {
+    key: "ArrowUp", ctrl: true, shift: true, alt: false, meta: false
+  },
+  "pdf-tab": {
+    key: "ArrowDown", ctrl: true, shift: true, alt: false, meta: false
+  }
+};
+
+// Detect Mac and update modifiers
+function applyPlatformShortcuts(shortcuts) {
+  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  if (!isMac) return shortcuts;
+
+  const updated = {};
+  for (const [command, value] of Object.entries(shortcuts)) {
+    updated[command] = {
+      ...value,
+      meta: value.ctrl,
+      ctrl: false
+    };
+  }
+  return updated;
+}
+
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("[Background] Overleaf Assistant installed");
+  chrome.storage.local.get("command_customizations", (data) => {
+    if (!data.command_customizations) {
+      const updatedShortcuts = applyPlatformShortcuts(defaultShortcuts);
+      chrome.storage.local.set({ command_customizations: updatedShortcuts }, () => {
+        console.log("[Overleaf Helper] Default shortcuts saved.");
+      });
+    }
+  });
 });
+
+
+// ============================
+// KEYBOARD HANDLING
+// ============================
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === "get-shortcuts") {
+    chrome.storage.local.get("command_customizations", (result) => {
+      sendResponse(result.command_customizations);
+    });
+
+    // Required: true when using sendResponse asynchronously
+    return true;
+  }
+
+  if (msg.type === "key-pressed") {
+    console.log(`[SHORTCUT] Command triggered: ${msg.command}`);
+    handleShortcut(msg.command, sender.tab);
+  }
+});
+
+function handleShortcut(command, tab) {
+  switch (command) {
+  case "toggle-file-tree":
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: toggleFileTree
+    });
+    break;
+  case "only-editor":
+  case "only-pdf":
+  case "editor-pdf":
+  case "pdf-tab":
+    chrome.scripting.executeScript({
+      target: { tabId: tab.id },
+      func: toggleLayoutView,
+      args: [command, tab]
+    });
+    break;
+  }
+}
+
+//
+// ON PDF SEPARATE TAB
+//
+// chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+//   const currentTab = tabs[0];
+//   const url = new URL(currentTab.url);
+
+//   // Check if it's an Overleaf project tab
+//   const match = url.href.match(/https:\/\/www\.overleaf\.com\/project\/([\w-]+)/);
+//   if (!match) return;
+
+//   const projectId = match[1];
+//   const detachedUrl = `https://www.overleaf.com/project/${projectId}/detached`;
+
+//   chrome.runtime.getPlatformInfo((info) => {
+//     const isMac = info.os === "mac";
+  
+//     chrome.windows.getCurrent((originalWindow) => {
+//       setTimeout(() => {
+//         // Try to refocus original
+//         chrome.windows.update(originalWindow.id, { focused: true }, () => {
+//           chrome.tabs.update(originalWindow.tabs[0].id, { active: true });
+//         });
+//       }, isMac ? 800 : 300);
+//     });
+//   });  
+// });
+
+
+// ============================
+// CONTENT SCRIPT HELPERS
+// ============================
+function toggleFileTree() {
+  const togglerClosed = document.querySelector(
+    ".custom-toggler.custom-toggler-west.custom-toggler-closed"
+  );
+  if (togglerClosed) {
+    togglerClosed.click();
+  } else {
+    const togglerOpened = document.querySelector(
+      "#ide-root > div.ide-react-main > div > div > div:nth-child(2) > div > button"
+    );
+    togglerOpened?.click();
+  }
+}
+
+function toggleLayoutView(command, tab) {
+  const layoutMap = {
+    "editor-pdf": 0,
+    "only-editor": 1,
+    "only-pdf": 2,
+    "pdf-tab": 3
+  };
+
+  const dropdownBtn = document.querySelector("#layout-dropdown-btn");
+
+  // Click the dropdown button if not expanded
+  if (dropdownBtn && dropdownBtn.getAttribute("aria-expanded") === "false") {
+    dropdownBtn.click();
+  }
+
+  const dropdownMenu = document.querySelector(
+    "#ide-root > div.ide-react-main > nav > div.toolbar-right > div.toolbar-item.layout-dropdown.dropdown > ul"
+  );
+  if (!dropdownMenu) return;
+
+  const options = dropdownMenu.querySelectorAll("a.dropdown-item");
+  const desiredIndex = layoutMap[command];
+
+  if (typeof desiredIndex !== "number" || !options[desiredIndex]) return;
+
+  // Get current active layout index
+  let currentIndex = -1;
+  options.forEach((option, i) => {
+    if (option.classList.contains("active")) {
+      currentIndex = i;
+    }
+  });
+
+  if (currentIndex !== desiredIndex) {
+    // Delay the layout click by 200ms
+    options[desiredIndex].click();
+    const div = document.getElementById("DISPLACED");
+    const toolbar = document.querySelector(
+      "#ol-cm-toolbar-wrapper > div > div.ol-cm-toolbar-button-group.ol-cm-toolbar-end"
+    );
+    if (div && toolbar) toolbar.appendChild(div);
+  } else {
+    // If already selected, refocus the editor and close the dropdown after delay
+    setTimeout(async () => {
+      let focus;
+      function toFocus(focus) {focus.focus();}
+      switch (desiredIndex) {
+        case 2: // pdf only
+          focus = document.querySelector("#panel-pdf > div > div.pdf-viewer > div > div"); // pdf
+          break;
+        case 0:
+        case 1:
+          focus = document.querySelector('.cm-content[contenteditable="true"]'); // editor
+          break;
+        case 3: // tab
+          return;
+      }
+      await dropdownBtn.click(); // Close dropdown
+      toFocus(focus);
+    }, 100);
+  }
+}
 
 // Background service worker (background.js)
 
@@ -149,78 +337,6 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     return true;
   }
 });
-
-
-// ------------------------------
-// Command handlers (keyboard shortcuts)
-// ------------------------------
-chrome.commands.onCommand.addListener(async (command) => {
-  console.log("[Command]", command);
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab || !tab.url.includes("overleaf.com")) return;
-
-  if (command === "open-files") {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: toggleFileTree,
-    });
-  } else if (command === "toggle-forward" || command === "toggle-backward") {
-    await chrome.scripting.executeScript({
-      target: { tabId: tab.id },
-      func: toggleLayoutView,
-      args: [command],
-    });
-  }
-});
-
-// ------------------------------
-// Helper: Toggle file tree
-// ------------------------------
-function toggleFileTree() {
-  const togglerClosed = document.querySelector(
-    ".custom-toggler.custom-toggler-west.custom-toggler-closed"
-  );
-  if (togglerClosed) {
-    togglerClosed.click();
-    console.log("[Content] File tree opened");
-  } else {
-    const togglerOpened = document.querySelector("#ide-root > div.ide-react-main > div > div > div:nth-child(2) > div > button");
-    togglerOpened?.click();
-    console.log("[Content] File tree closed");
-  }
-}
-
-// ------------------------------
-// Helper: Toggle layout view
-// ------------------------------
-function toggleLayoutView(command) {
-  const dropdownBtn = document.querySelector("#layout-dropdown-btn");
-  if (dropdownBtn && dropdownBtn.getAttribute("aria-expanded") === "false") {
-    dropdownBtn.click();
-  }
-  const dropdownMenu = document.querySelector(
-    "#ide-root > div.ide-react-main > nav > div.toolbar-right > div.toolbar-item.layout-dropdown.dropdown > ul"
-  );
-  if (!dropdownMenu) return console.error("Dropdown menu not found");
-
-  const options = dropdownMenu.querySelectorAll("a.dropdown-item");
-  let currentIdx = -1;
-  options.forEach((opt, i) => {
-    if (opt.classList.contains("active")) currentIdx = i;
-  });
-  if (currentIdx === -1) return console.error("No selected layout found");
-
-  let nextIdx = currentIdx;
-  do {
-    nextIdx =
-      command === "toggle-forward"
-        ? (nextIdx + 1) % options.length
-        : (nextIdx - 1 + options.length) % options.length;
-  } while (options[nextIdx].textContent.includes("PDF in separate tab"));
-
-  options[nextIdx].click();
-  console.log("[Content] Layout toggled to", options[nextIdx].textContent);
-}
 
 // ------------------------------
 // Upload Panel & File Handling

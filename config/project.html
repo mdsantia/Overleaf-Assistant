@@ -6,27 +6,32 @@
   <script src="project.js" type="module" defer></script>
 </head>
 <body>
-  <div class="app">
-
+  <div class="subapp">
     <!-- LEFT SIDE: Project Settings -->
-    <div class="sidebar">
+    <div class="subsidebar" id="">
 
       <!-- Primary Settings -->
-      <section class="config-section" id="primarySettings">
-        <h1 id="projectName">Untitled</h1>
-        <h2>Primary Settings</h2>
-
-        <label for="mainDoc">Main Document Name:</label>
+      <section class="config-section-card" id="primarySettings">
+        <h1 class="variable-editor-header" id="projectName">Untitled</h1>
+        
+        <h2  for="mainDoc">Main Document Name:</h2>
         <input type="text" id="mainDoc" placeholder="e.g. paper.tex">
 
         <label>
           <input type="checkbox" id="popupShortcut">
           Add to Popup List
         </label>
+        
+        <!-- Popup Customizations -->
+        <fieldset id="popupCustomizations" class="hidden">
+          <legend>Popup Customizations</legend>
+          <label><input type="checkbox" id="openPdfToggle"> Only Open PDF</label>
+          <label><input type="checkbox" id="showPdfButton"> Show PDF Button</label>
+        </fieldset>
 
         <label>
           <input type="checkbox" id="localBackupToggle">
-          Enable Local Back-up
+          Enable Local Git
         </label>
 
         <!-- Folder selection section -->
@@ -35,42 +40,33 @@
           <span id="folderName" style="margin-left:8px; font-style:italic;">None</span>
           <input type="file" id="folderInput" webkitdirectory directory style="display:none;">
         </div>
-
-
-        <!-- Popup Customizations -->
-        <fieldset id="popupCustomizations" class="hidden">
-          <legend>Popup Customizations</legend>
-          <label><input type="checkbox" id="openPdfToggle"> Open PDF Viewer</label>
-          <label><input type="checkbox" id="showPdfButton"> Show PDF Button</label>
-          <label><input type="checkbox" id="autoAutoSaveToggle"> Auto Auto-Save</label>
-        </fieldset>
       </section>
 
       <!-- Project Templates -->
-      <section class="config-section" id="projectTemplates">
+      <section class="config-section-card" id="projectTemplates">
         <h2>Project Templates</h2>
-        <button id="addTemplateUsageBtn">+ Add Template Usage</button>
+        <button id="addTemplateUsageBtn" style="width: 100%;">+ Add Template Usage</button>
         <div id="templateUsageList"></div>
       </section>
-
+      
       <!-- Delete Project -->
-      <section class="config-section danger-zone">
+      <section class="config-section-card danger-zone">
         <h2>Danger Zone</h2>
         <button id="deleteProjectBtn" class="delete-btn">Delete Project</button>
       </section>
     </div>
-
-    <!-- RIGHT SIDE: File Editor -->
-    <div class="file-editor">
-      <div class="file-editor-header">
-        <h2>Variable Editor</h2>
+    
+  
+    <!-- RIGHT SIDE: Variable Editor -->
+    <div class="submain" id="VariableEditor">
+      <div class="variable-editor">
+        <div class="variable-editor-header" id="templateName"><h1></h1></div>
+        <div id="variableEditorContent" class="editor-content" align-items="center">
+          <h1>Select a template to customize.</h1>
+        </div>
+        <button id="saveVarBtn" class="save-button">Save Variable</button>
       </div>
-      <div id="fileEditorContent" class="editor-content">
-        <p>Select a variable to edit.</p>
-      </div>
-      <button id="saveVarBtn" class="save-button">Save Variable</button>
     </div>
-
   </div>
 </body>
 </html>

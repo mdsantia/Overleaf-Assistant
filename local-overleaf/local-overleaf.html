@@ -1,6 +1,6 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html class="fixed-size-document" lang="en">
+    <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Overleaf (Offline)</title>
@@ -8,105 +8,70 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/darcula.min.css">
 </head>
-<body>
-  <!-- Top Navigation Bar -->
-  <nav class="top-nav">
-    <div class="nav-left">
-      <div class="logo">
-        <img src="../icons/nbg-icon-48.png" alt="Overleaf" class="logo-icon">
-        <span class="project-name" id="project-name">Loading...</span>
-      </div>
-    </div>
-    <div class="nav-center">
-      <div id="status-banner" class="status-offline">
-        🔴 Offline Mode — Changes saved locally
-      </div>
-    </div>
-    <div class="nav-right">
-      <button id="sync-btn" class="btn btn-primary" disabled>
-        <span id="sync-text">Sync when online</span>
-      </button>
-      <button id="settings-btn" class="btn btn-secondary">
-        ⚙️
-      </button>
-    </div>
-  </nav>
-
-  <!-- Main Editor Layout -->
-  <div class="editor-layout">
-    <!-- File Tree Sidebar -->
-    <div class="sidebar" id="file-tree-sidebar">
-      <div class="sidebar-header">
-        <h3>Files</h3>
-        <button id="add-file-btn" class="btn-icon" title="Add new file">
-          ➕
-        </button>
-      </div>
-      <div class="file-tree" id="file-tree">
-        <!-- Files will be populated here -->
-      </div>
-    </div>
-
-    <!-- Editor Panel -->
-    <div class="editor-panel">
-      <div class="editor-tabs" id="editor-tabs">
-        <!-- Tabs will appear here -->
-      </div>
-      <div class="editor-content">
-        <div id="editor-placeholder" class="editor-placeholder">
-          Select a file to start editing
-        </div>
-        <div id="code-editor" class="code-editor" style="display: none;"></div>
-      </div>
-    </div>
-
-    <!-- PDF Preview Panel (Optional) -->
-    <div class="preview-panel" id="preview-panel" style="display: none;">
-      <div class="preview-header">
-        <h3>Preview</h3>
-        <button id="toggle-preview" class="btn-icon">
-          👁️
-        </button>
-      </div>
-      <div class="preview-content">
-        <div class="preview-placeholder">
-          PDF preview not available in offline mode
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Context Menu -->
-  <div id="context-menu" class="context-menu" style="display: none;">
-    <div class="context-item" data-action="rename">Rename</div>
-    <div class="context-item" data-action="delete">Delete</div>
-    <div class="context-separator"></div>
-    <div class="context-item" data-action="download">Download</div>
-  </div>
-
-  <!-- Add File Modal -->
-  <div id="add-file-modal" class="modal" style="display: none;">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h3>Add New File</h3>
-        <button class="modal-close">&times;</button>
-      </div>
-      <div class="modal-body">
-        <input type="text" id="new-file-name" placeholder="Enter file name (e.g., main.tex)" class="input-field">
-      </div>
-      <div class="modal-footer">
-        <button id="create-file-btn" class="btn btn-primary">Create</button>
-        <button class="modal-close btn btn-secondary">Cancel</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Scripts -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/stex/stex.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/javascript/javascript.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/python/python.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
-  <script src="local-overleaf.js"></script>
-</body>
+    <body class="application-page" data-theme="default">
+        <main id="ide-root">
+            <div class="loading-screen">
+                <div class="loading-screen-brand-container">
+                    <div class="loading-screen-brand" style="height: 20%"></div>
+                </div>
+                <h3 class="loading-screen-label">
+                    Loading<span class="loading-screen-ellip">.</span>
+                    <span class="loading-screen-ellip">.</span>
+                    <span class="loading-screen-ellip">.</span>
+                </h3>
+            </div>
+        </main>
+        <section class="cookie-banner hidden-print hidden" aria-label="Cookie banner">
+            <div class="cookie-banner-content">
+                We only use cookies for essential purposes and to improve your experience on our site. You can find out more in our <a href="/legal#Cookies">cookie policy</a>
+                .
+            </div>
+            <div class="cookie-banner-actions">
+                <button class="btn btn-link btn-sm" type="button" data-ol-cookie-banner-set-consent="essential">Essential cookies only</button>
+                <button class="btn btn-primary btn-sm" type="button" data-ol-cookie-banner-set-consent="all">Accept all cookies</button>
+            </div>
+        </section>
+    </body>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="/socket.io/socket.io.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/runtime-54a3837997f2f47148f9.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/7582-a1a51a37d38c1be5da65.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/277-aaee83bc63f25683951b.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/5079-8903b287ab6e07d31715.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/3027-879e37c424a0f96a4dd3.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/5250-4081b046eef123104973.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/9612-b4025764166046fefc2b.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/8732-b94c71fb091b5b986c11.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/8596-4ac1866a47425cfb7237.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/7304-93bec3fbc319e0e6d664.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/4271-ff12e13ebcba035cbd80.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/5958-bab4ae4a46343bfa1766.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/1970-c32eece15d23ad1f49f3.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/9420-db2298fb95b42fa5d1df.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/2204-fb62ba41b11cada808e6.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/3020-a2e2bc80d6acd3ff9e67.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/746-677dbfb33c3e3458a281.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/1504-8f0c004e0ba5e9d93246.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/1284-5d46671f392bc7683772.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/7474-fe9cc46cc03c0448e7b8.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/771-f1b30e9eb74a637dcfd9.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/3587-2af22e29ee185e917dcc.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/5870-f7eb790b2f84b46bf1ef.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/pages/ide-59fc9d000475cf68033b.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/7582-a1a51a37d38c1be5da65.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==" src="https://cdn.overleaf.com/js/tracking-2cd351b7b16c1b4339b3.js" defer></script>
+    <script type="text/javascript" nonce="UyH4Z6OOsdgr2fQIPthQQw==">
+        window.addEventListener('DOMContentLoaded', function() {
+            var bots = ['Bytespider', 'TikTokSpider', 'bingbot', 'Baiduspider', 'Amazonbot', 'Googlebot']
+            //- Look for bundle
+            var cdnBlocked = typeof Frontend === 'undefined'
+            //- Prevent loops
+            var noCdnAlreadyInUrl = window.location.href.indexOf('nocdn=true') != -1
+            if (cdnBlocked && !noCdnAlreadyInUrl && !bots.some(function(bot) {
+                return navigator.userAgent.indexOf(bot) !== -1
+            })) {
+                //- Set query param, server will not set CDN url
+                window.location.search += '&nocdn=true'
+            }
+        })
+    </script>
 </html>

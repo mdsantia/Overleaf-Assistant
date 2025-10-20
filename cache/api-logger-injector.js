@@ -11,7 +11,7 @@
 
   // Inject the logger script into the page's context (MAIN world)
   const script = document.createElement('script');
-  script.src = chrome.runtime.getURL('cache/api-logger-main-world.js');
+  // script.src = chrome.runtime.getURL('cache/api-logger-main-world.js');
   script.onload = function() {
     console.log('[Injector] ✅ API logger injected successfully');
     this.remove();

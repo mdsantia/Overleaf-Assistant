@@ -1,23 +1,21 @@
-body {
-  margin: 0;
-  font-family: "Helvetica Neue", Arial, sans-serif;
-  display: flex;
-  background-color: #fff;
-  color: #111;
-}
 /* App container full window */
-html, body {
-  margin: 0;
-  padding: 0;
-  height: 100%;
-  overflow: hidden; /* prevent global scroll */
-}
-
 .app {
   display: flex;
   flex: 1;
   height: 100%;
   width: 100%;
+}
+
+html,body { 
+  height:100%; 
+  margin:0;
+  font-family: Inter, 
+    ui-sans-serif, system-ui, 
+    -apple-system, 
+    "Segoe UI", 
+    Roboto, "Helvetica Neue", 
+    Arial; 
+    font-size:14px; 
 }
 
 /* Sidebar */
@@ -72,23 +70,6 @@ html, body {
   letter-spacing: 1px;
 }
 
-.sidebar-header button {
-  background: none;
-  border: none;
-  color: #bbb;
-  cursor: pointer;
-  font-size: 14px;
-  margin-left: 6px;
-  padding: 2px 6px;
-  border-radius: 4px;
-  transition: background 0.2s;
-}
-
-.sidebar-header button:hover {
-  background: #333;
-  color: #fff;
-}
-
 .sidebar-content {
   display: none;
   margin-top: 6px;
@@ -104,6 +85,79 @@ html, body {
   border-top: 1px solid #333;
   display: flex;
   justify-content: space-between;
+}
+
+/* small action buttons */
+button, .btn {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  color: var(--text);
+  border: 1px solid rgba(255,255,255,0.03);
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  transition: transform .06s ease, background .08s ease, box-shadow .08s ease;
+}
+button:hover, .btn:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.55); }
+button:active, .btn:active { transform: translateY(0); }
+
+/* primary accent button */
+.btn-primary {
+  background: linear-gradient(180deg, var(--accent), rgba(0,153,68,0.86));
+  color: #fff;
+  border: none;
+  box-shadow: 0 6px 18px rgba(0,153,68,0.12);
+}
+.btn-primary:hover { filter: brightness(.98); }
+
+/* secondary (ghost) */
+.btn-ghost {
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.06);
+}
+
+.shortcut-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #f9f9f9;
+  padding: 6px 10px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+}
+
+.shortcut-command {
+  font-weight: 600;
+  color: #333;
+}
+
+.shortcut-key {
+  font-family: monospace;
+  background: #eee;
+  padding: 3px 8px;
+  border-radius: 4px;
+  min-width: 140px;
+  text-align: center;
+}
+
+.shortcut-key.listening {
+  background: #ffebcc;
+  color: #444;
+  font-style: italic;
+}
+
+.shortcut-row button {
+  margin-left: 8px;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+
+.shortcut-key.conflict {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+  font-weight: 600;
 }
 
 .sidebar-footer button {
@@ -203,18 +257,57 @@ html, body {
   font-size: 14px;
 }
 
-.save-button {
-  margin-top: 20px;
-  padding: 8px 16px;
-  font-size: 14px;
-  background-color: #111;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
+
+.editorWrapper {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
 }
 
-.save-button:hover {
-  background-color: #444;
+#lineNumbers {
+  margin-top: 0;
+  padding: 5px 8px 5px 0px;
+  text-align: right;
+  user-select: none;
+  background: #f7f7f7;
+  color: #888;
+  font-family: monospace;
+  white-space: pre;
+  line-height: 1.4;
+  font-size: 14px;
+  border: none;
+  resize: none;
+  outline: none;
+
+  overflow: hidden;      /* hides scrollbars */
+  position: absolute;    /* allow stacking with textarea */
+  width: 40px;           /* enough width for line numbers */
+  height: 99%;
+  pointer-events: none;  /* prevent focus/scroll */
+}  
+
+#editorText {
+  padding: 5px 8px 5px 0px;
+  position: absolute;
+  left: 40px;             /* matches lineNumbers width */
+  width: calc(100% - 40px);
+  height: 99%;
+  font-family: monospace;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 5px;
+  border: none;
+  outline: none;
+  overflow: auto;
+}  
+
+.settings-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease-in-out;
+  color: black;
+  font-weight: bold;
 }

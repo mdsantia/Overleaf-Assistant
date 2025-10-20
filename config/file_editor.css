@@ -1,3 +1,19 @@
+:root{
+  --bg: #0f0f10;                /* very dark background */
+  --panel: #121215;             /* panel background */
+  --muted: #9ca3a8;             /* muted text */
+  --border: #232427;            /* subtle borders */
+  --card: #0b0b0c;              /* cards */
+  --surface: #141416;           /* editor surface */
+  --text: #ffffff;              /* primary text */
+  --accent: rgb(0,153,68);      /* requested green accent */
+  --danger: #d9534f;            /* delete red (used sparingly) */
+  --glass: rgba(255,255,255,0.02);
+  --radius: 10px;
+  --shadow-1: 0 6px 18px rgba(0,0,0,0.6);
+  font-synthesis: none;
+}
+
 /* App container full window */
 html, body {
     margin: 0;
@@ -6,13 +22,19 @@ html, body {
     overflow: hidden; /* prevent global scroll */
   }
   
-  .app {
+  .subapp {
     display: flex;
     flex: 1;
     height: 100%;
     width: 100%;
   }
   
+  .file-mode-checkbox {
+    margin-right: 8px;
+    cursor: pointer;
+    accent-color: var(--accent);
+  }  
+
   /* File tree */
   .file-tree {
     flex: 1;
@@ -123,17 +145,65 @@ html, body {
     background: #fff;
     overflow: hidden;
   }
-  .file-editor-header {
-    padding: 8px;
-    border-bottom: 1px solid #ddd;
-    font-weight: bold;
-    background: #f7f7f7;
+  .file-editor-modal {
+    position: fixed;
+    top: 10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    height: 70%;
+    background: var(--surface);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    display: flex;
+    flex-direction: column;
+    z-index: 9999;
+    box-shadow: var(--shadow-1);
   }
+  
+  .file-editor-header {
+    padding: 10px;
+    background: var(--panel);
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+  }
+  
   .file-editor-body {
     flex: 1;
-    display: flex;
-    overflow: hidden;
+    padding: 10px;
+    background: var(--card);
+    color: var(--text);
+    border: none;
+    resize: none;
+    font-family: monospace;
   }
+  
+  .file-save-btn, .file-close-btn {
+    background: var(--accent);
+    color: white;
+    padding: 8px 12px;
+    margin: 8px;
+    border: none;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+  
+  .file-close-btn {
+    background: var(--danger);
+  }
+  
+  .file-edit-btn {
+    margin-left: 10px;
+    background: var(--border);
+    color: var(--text);
+    padding: 4px 8px;
+    border: none;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  
   .file-line-numbers {
     background: #f0f0f0;
     padding: 5px;
@@ -144,17 +214,6 @@ html, body {
     border-right: 1px solid #ddd;
     white-space: pre;
     overflow-y: auto;
-  }
-  #editorText {
-    flex: 1;
-    border: none;
-    padding: 5px;
-    font-family: monospace;
-    font-size: 14px;
-    resize: none;
-    outline: none;
-    line-height: 1.4;
-    overflow: auto;
   }
 
   /* Variable list */

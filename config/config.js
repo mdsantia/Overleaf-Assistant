@@ -19,7 +19,6 @@ function storageSet(obj) {
   return new Promise((resolve) => chrome.storage.local.set(obj, resolve));
 }
 
-let loadingView = false;
 let activeSelection = null; // { type, id }
 
 //////////////////////////////
@@ -27,12 +26,13 @@ let activeSelection = null; // { type, id }
 //////////////////////////////
 document.addEventListener("DOMContentLoaded", async () => {
   const params = new URLSearchParams(window.location.search);
-  const preselectProjectId = params.get("projectId");
+  const projectId = params.get("projectId");
+  const templateId = params.get("templateId");
+  const newTemplate = params.get("newTemplate");
 
   // Render lists (await to keep ordering predictable)
-  await renderProjects(preselectProjectId);
-  await renderTemplates();
-  await renderArchived();
+  const isArchived = await renderProjects(projectId);
+  await renderTemplates(templateId);
 
   // Wire collapsibles and restore state
   await setupCollapsibles();
@@ -48,39 +48,76 @@ document.addEventListener("DOMContentLoaded", async () => {
       createNewTemplate();
     });
   }
+  const settingsButton = document.getElementById("settingsBtn")
+  if (settingsButton) {
+    settingsButton.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.location.href = chrome.runtime.getURL("/config/config.html");
+    });
+  }
+
+  const id = projectId ? projectId : templateId;
+  const datatype = isArchived ? "archived" : 
+  (projectId ? "project" : (templateId ? "template" : null));
+  if (datatype !== null) {
+    const link = document.createElement("link");
+    link.rel = "stylesheet";
+    link.href = "file_editor.css";
+    document.querySelector(".main").appendChild(link);
+  }
+  await loadView(datatype, id);
+
+  // ✅ Focus template title if requested
+  if (newTemplate) {
+    const titleEl = document.getElementById("templateTitle");
+    if (titleEl) {
+      titleEl.focus();
+      const range = document.createRange();
+      range.selectNodeContents(titleEl);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+  }
 });
 
 ////////////////////////////
 // Sidebar rendering APIs //
 ////////////////////////////
 
-export async function renderProjects(preselectProjectId = null) {
+export async function renderProjects(projectId = null) {
   const data = await storageGet("configProjects");
   const projects = data.configProjects || {};
   const projectListEl = document.getElementById("config-projectList");
-  if (!projectListEl) return;
+  const archivedListEl = document.getElementById("archivedList");
+  if (!projectListEl || !archivedListEl) return;
   projectListEl.innerHTML = "";
+  archivedListEl.innerHTML = "";
 
   for (const projectId of Object.keys(projects)) {
     const project = projects[projectId];
     const item = createSidebarItem(
       project.name,
-      "project",
+      project.archived ? "archived" : "project",
       projectId,
-      async () => { await archiveProject(projectId, project); }
+      async () => { await un_archiveProject(projectId, project.archived); }
     );
-    projectListEl.appendChild(item);
+    if (project.archived) {
+      archivedListEl.appendChild(item);
+    } else {
+      projectListEl.appendChild(item);
+    }
   }
 
-  updateSidebarActiveClasses();
-
-  if (preselectProjectId && projects[preselectProjectId]) {
-    const el = document.querySelector(`.project-link[data-type="project"][data-id="${preselectProjectId}"]`);
-    await handleSelection("project", preselectProjectId, el);
+  if (projectId) {
+    if (!projects[projectId]) {
+      window.location.href = chrome.runtime.getURL(`/config/config.html`);
+    }
+    return projects[projectId].archived;
   }
 }
 
-export async function renderTemplates() {
+export async function renderTemplates(templateId) {
   const data = await storageGet("template");
   const templates = data.template || {};
   const templateListEl = document.getElementById("templateList");
@@ -98,28 +135,11 @@ export async function renderTemplates() {
     templateListEl.appendChild(item);
   }
 
-  updateSidebarActiveClasses();
-}
-
-export async function renderArchived() {
-  const data = await storageGet("archive");
-  const archived = data.archive || {};
-  const archivedListEl = document.getElementById("archivedList");
-  if (!archivedListEl) return;
-  archivedListEl.innerHTML = "";
-
-  for (const archivedId of Object.keys(archived)) {
-    const project = archived[archivedId];
-    const item = createSidebarItem(
-      project.name,
-      "archived",
-      archivedId,
-      async () => { await unarchiveProject(archivedId, project); }
-    );
-    archivedListEl.appendChild(item);
+  if (templateId) {
+    if (!templates[templateId]) {
+      window.location.href = chrome.runtime.getURL(`/config/config.html`);
+    }
   }
-
-  updateSidebarActiveClasses();
 }
 
 ///////////////////////////
@@ -139,7 +159,8 @@ function createSidebarItem(name, type, id, onSecondary) {
   // Primary click opens view
   container.addEventListener("click", (e) => {
     if (e.target.tagName === "BUTTON") return;
-    handleSelection(type, id, container);
+    const linktype = type == "template" ? type : "project";
+    window.location.href = chrome.runtime.getURL(`/config/config.html?${linktype}Id=${id}`);
   });
 
   // Secondary button
@@ -162,11 +183,11 @@ function createSidebarItem(name, type, id, onSecondary) {
       await storageSet({ template: templates });
 
       if (activeSelection && activeSelection.type === "template" && activeSelection.id === id) {
-        activeSelection = null;
-        const main = document.querySelector(".main");
-        if (main) main.innerHTML = "";
+        window.location.href = chrome.runtime.getURL("/config/config.html");
+        return;
       }
-
+      
+      e.stopPropagation();
       await renderTemplates();
     });
   } else if (type === "archived") {
@@ -177,24 +198,7 @@ function createSidebarItem(name, type, id, onSecondary) {
     secondaryBtn.style.marginLeft = "8px";
     secondaryBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      const data = await storageGet(["configProjects", "archive"]);
-      const projects = data.configProjects || {};
-      const archived = data.archive || {};
-      const project = archived[id];
-      if (!project) return;
-
-      projects[id] = project;
-      delete archived[id];
-      await storageSet({ configProjects: projects, archive: archived });
-
-      if (activeSelection && activeSelection.type === "archived" && activeSelection.id === id) {
-        activeSelection = null;
-        const main = document.querySelector(".main");
-        if (main) main.innerHTML = "";
-      }
-
-      await renderProjects();
-      await renderArchived();
+      await onSecondary();
     });
   } else if (onSecondary) {
     // default archive button for projects
@@ -202,67 +206,15 @@ function createSidebarItem(name, type, id, onSecondary) {
     secondaryBtn.textContent = "📦";
     secondaryBtn.title = "Archive";
     secondaryBtn.style.marginLeft = "8px";
-    secondaryBtn.addEventListener("click", async (e) => {
+    secondaryBtn.addEventListener("click", async (e) => {  
       e.stopPropagation();
       await onSecondary();
-      await renderProjects();
-      await renderArchived();
-
-      if (activeSelection && activeSelection.type === type && activeSelection.id === id) {
-        activeSelection = null;
-        const main = document.querySelector(".main");
-        if (main) main.innerHTML = "";
-      }
-      updateSidebarActiveClasses();
     });
   }
 
   if (secondaryBtn) container.appendChild(secondaryBtn);
   return container;
 }
-
-/////////////////////////
-// Selection & loading //
-/////////////////////////
-async function handleSelection(type, id, container = null, focusTitle = false) {
-  if (loadingView) return;
-
-  if (activeSelection && activeSelection.type === type && activeSelection.id === id) {
-    return;
-  }
-
-  const previousSelection = activeSelection;
-  activeSelection = { type, id };
-  updateSidebarActiveClasses();
-
-  loadingView = true;
-  if (container) container.classList.add("loading");
-
-  try {
-    await loadView(type, id);
-
-    // ✅ Focus template title if requested
-    if (type === "template" && focusTitle) {
-      const titleEl = document.getElementById("templateTitle");
-      if (titleEl) {
-        titleEl.focus();
-        const range = document.createRange();
-        range.selectNodeContents(titleEl);
-        const sel = window.getSelection();
-        sel.removeAllRanges();
-        sel.addRange(range);
-      }
-    }
-  } catch (err) {
-    console.error("Error loading view:", err);
-    activeSelection = previousSelection;
-    updateSidebarActiveClasses();
-  } finally {
-    if (container) container.classList.remove("loading");
-    loadingView = false;
-  }
-}
-
 
 function updateSidebarActiveClasses() {
   document.querySelectorAll(".project-link").forEach((el) => {
@@ -279,42 +231,23 @@ function updateSidebarActiveClasses() {
 //////////////////////////////
 // Archive / Unarchive APIs //
 //////////////////////////////
-async function archiveProject(projectId, project) {
-  const data = await storageGet(["configProjects", "archive"]);
+async function un_archiveProject(projectId, unarchive_bool) {
+  const data = await storageGet(["configProjects"]);
   const projects = data.configProjects || {};
-  const archived = data.archive || {};
-  archived[projectId] = project;
-  delete projects[projectId];
-  await storageSet({ configProjects: projects, archive: archived });
+  if (unarchive_bool) {
+    delete projects[projectId].archived;
+  } else {
+    projects[projectId].archived = true;
+  }
+  await storageSet({ configProjects: projects });
 
   // If the archived project was open, clear view & activeSelection
-  if (activeSelection && activeSelection.type === "project" && activeSelection.id === projectId) {
-    activeSelection = null;
-    const main = document.querySelector(".main");
-    if (main) main.innerHTML = "";
+  if (activeSelection && activeSelection.id === projectId) {
+    window.location.href = chrome.runtime.getURL(`/config/config.html?projectId=${projectId}`);
+    return;
   }
-
   await renderProjects();
-  await renderArchived();
-}
-
-async function unarchiveProject(projectId, project) {
-  const data = await storageGet(["configProjects", "archive"]);
-  const projects = data.configProjects || {};
-  const archived = data.archive || {};
-  projects[projectId] = project;
-  delete archived[projectId];
-  await storageSet({ configProjects: projects, archive: archived });
-
-  // If unarchived item was active in archived view, keep it cleared
-  if (activeSelection && activeSelection.type === "archived" && activeSelection.id === projectId) {
-    activeSelection = null;
-    const main = document.querySelector(".main");
-    if (main) main.innerHTML = "";
-  }
-
-  await renderProjects();
-  await renderArchived();
+  await updateSidebarActiveClasses();
 }
 
 /////////////////////////////
@@ -326,7 +259,7 @@ function setupImportExport() {
 
   if (exportBtn) {
     exportBtn.onclick = async () => {
-      const data = await storageGet(["configProjects", "archive", "template"]);
+      const data = await storageGet(["popProjects", "configProjects", "template", "command_customizations"]);
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -349,7 +282,7 @@ function setupImportExport() {
         const importedData = JSON.parse(text);
 
         // merge keys
-        for (const key of ["configProjects", "archive", "template"]) {
+        for (const key of ["popProjects", "configProjects", "template", "command_customizations"]) {
           if (importedData[key]) {
             const existing = await storageGet(key);
             const merged = { ...(existing[key] || {}), ...importedData[key] };
@@ -359,7 +292,6 @@ function setupImportExport() {
         // re-render everything after import
         await renderProjects();
         await renderTemplates();
-        await renderArchived();
         alert("Data imported successfully!");
       };
       input.click();
@@ -412,15 +344,7 @@ async function createNewTemplate() {
   templates[id] = newTemplate;
   await storageSet({ template: templates });
 
-  await renderTemplates();
-
-  const el = document.querySelector(`.project-link[data-type="template"][data-id="${id}"]`);
-  if (el) {
-    // ✅ Pass true to indicate autofocus
-    await handleSelection("template", id, el, true);
-  } else {
-    await handleSelection("template", id, null, true);
-  }
+  window.location.href = chrome.runtime.getURL(`/config/config.html?templateId=${id}&newTemplate=true`);
 }
 
 //////////////////////
@@ -429,16 +353,21 @@ async function createNewTemplate() {
 export async function loadView(type, id) {
   const main = document.querySelector(".main");
   let url = "";
-  if (type === "project") url = "project.html";
-  if (type === "template") url = "template.html";
-  if (type === "archived") url = "project.html"; // archived uses project read-only view
-
-  if (!url) return;
-
-  // fetch html and inject
-  const res = await fetch(url, { cache: "no-cache" });
-  const html = await res.text();
-  main.innerHTML = html;
+  if (type) {
+    switch(type) {
+      case "template": url = "template.html"; break;
+      case "project":
+      case "archived":
+        url = "project.html"; // archived uses project read-only view
+        break;
+      default:
+        return;
+      }
+      // fetch html and inject
+      const res = await fetch(url, { cache: "no-cache" });
+      const html = await res.text();
+      main.innerHTML = html;
+  }
 
   // after injecting, call the appropriate initializer
   if (type === "project") {
@@ -450,8 +379,162 @@ export async function loadView(type, id) {
   } else if (type === "archived") {
     const { initProjectView } = await import("./project.js");
     await initProjectView(id, true); // read-only
+  } else {
+    const main = document.querySelector(".main");
+    const shortcutsSection = document.createElement("div");
+    shortcutsSection.className = "config-section";
+    shortcutsSection.innerHTML = `<h2>Keyboard Shortcuts</h2><div id="shortcutsList"></div>`;
+    main.appendChild(shortcutsSection);
+
+    const { command_customizations = {} } = await storageGet("command_customizations");
+    const listEl = document.getElementById("shortcutsList");
+
+    for (const [command, shortcut] of Object.entries(command_customizations)) {
+      const row = document.createElement("div");
+      row.className = "shortcut-row";
+
+      const label = document.createElement("span");
+      label.textContent = command;
+      label.className = "shortcut-command";
+
+      const keybind = document.createElement("span");
+      keybind.textContent = formatShortcut(shortcut);
+      keybind.className = "shortcut-key";
+
+      const changeBtn = document.createElement("button");
+      changeBtn.textContent = "Change";
+      changeBtn.addEventListener("click", () => beginShortcutChange(command, keybind));
+
+      row.appendChild(label);
+      row.appendChild(keybind);
+      row.appendChild(changeBtn);
+      listEl.appendChild(row);
+    }
+    return;
   }
 
   // ensure active class remains correct (the DOM changed)
+  activeSelection = {type, id};
   updateSidebarActiveClasses();
+}
+
+//////////////////////
+// Shortcut helpers //
+//////////////////////
+function formatShortcut(shortcut) {
+  const parts = [];
+  if (shortcut.meta) parts.push("Meta");
+  if (shortcut.ctrl) parts.push("Ctrl");
+  if (shortcut.alt) parts.push("Alt");
+  if (shortcut.shift) parts.push("Shift");
+  parts.push((shortcut.key || '').toUpperCase());
+  return parts.join(" + ");
+}
+
+function beginShortcutChange(command, keybindEl) {
+  keybindEl.textContent = "Press new key...";
+  keybindEl.classList.add("listening");
+
+  const activeMods = new Set();
+
+  function onKeyDown(e) {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (e.key === "Escape") {
+      cleanup();
+      keybindEl.textContent = "Canceled";
+      setTimeout(async () => {
+        const data = await storageGet("command_customizations");
+        keybindEl.textContent = formatShortcut(data.command_customizations[command]);
+      }, 1500);
+      return;
+    }
+
+    // Modifiers → show live preview
+    if (isModifier(e.key)) {
+      activeMods.add(e.key);
+      keybindEl.textContent = formatLiveShortcut(activeMods);
+      return;
+    }
+
+    // Final key pressed
+    const newShortcut = {
+      key: e.key,
+      meta: activeMods.has("Meta") || e.metaKey,
+      ctrl: activeMods.has("Control") || e.ctrlKey,
+      alt: activeMods.has("Alt") || e.altKey,
+      shift: activeMods.has("Shift") || e.shiftKey
+    };
+
+    storageGet("command_customizations").then(data => {
+      const updated = { ...(data.command_customizations || {}) };
+
+      const conflictCommand = findConflict(updated, newShortcut, command);
+      if (conflictCommand) {
+        keybindEl.textContent = `❌ Conflicts with: ${conflictCommand}`;
+        keybindEl.classList.add("conflict");
+        setTimeout(async () => {
+          keybindEl.classList.remove("conflict", "listening");
+          const data = await storageGet("command_customizations");
+          keybindEl.textContent = formatShortcut(data.command_customizations[command]);
+        }, 2000);
+        cleanup();
+        return;
+      }
+
+      updated[command] = newShortcut;
+      storageSet({ command_customizations: updated }).then(() => {
+        keybindEl.textContent = formatShortcut(newShortcut);
+        keybindEl.classList.remove("listening");
+        cleanup();
+      });
+    });
+  }
+
+  function onKeyUp(e) {
+    if (isModifier(e.key)) {
+      activeMods.delete(e.key);
+      // Update the live display if the user releases modifiers
+      keybindEl.textContent = formatLiveShortcut(activeMods);
+    }
+  }
+
+  function cleanup() {
+    window.removeEventListener("keydown", onKeyDown, true);
+    window.removeEventListener("keyup", onKeyUp, true);
+    activeMods.clear();
+  }
+
+  window.addEventListener("keydown", onKeyDown, true);
+  window.addEventListener("keyup", onKeyUp, true);
+}
+
+function isModifier(key) {
+  return key === "Shift" || key === "Control" || key === "Meta" || key === "Alt";
+}
+
+function formatLiveShortcut(activeMods) {
+  if (activeMods.size === 0) return "Press new key...";
+  return [...activeMods].join(" + ") + " + …";
+}
+
+function findConflict(commandsObj, newShortcut, currentCommand) {
+  for (const [cmd, shortcut] of Object.entries(commandsObj)) {
+    if (cmd === currentCommand) continue;
+    if (isSameShortcut(shortcut, newShortcut)) {
+      return cmd;
+    }
+  }
+  return null;
+}
+
+function isSameShortcut(a, b) {
+  return (
+    a.key === b.key &&
+    a.alt === b.alt &&
+    a.ctrl === b.ctrl &&
+    a.meta === b.meta &&
+    a.shift === b.shift
+  );
 }

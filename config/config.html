@@ -1,44 +1,47 @@
 <!DOCTYPE html>
 <html>
-<head>
+  <head>
+  <meta charset="UTF-8">
   <title>Overleaf Helper Configuration</title>
   <link rel="stylesheet" href="config.css">
   <script src="config.js" type="module" defer></script>
 </head>
 <body>
-  <div class="sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-header" data-toggle="projects">
-        <h3>Projects</h3>
+  <div class="app">
+    <div class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-header" data-toggle="projects">
+          <h3>Projects</h3>
+        </div>
+        <div class="sidebar-content" id="config-projectList"></div>
       </div>
-      <div class="sidebar-content" id="config-projectList"></div>
-    </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-header" data-toggle="templates">
-        <h3>Templates</h3>
-        <button id="addTemplateBtn" title="Add Template">+</button>
+      <div class="sidebar-section">
+        <div class="sidebar-header" data-toggle="templates">
+          <h3>Templates</h3>
+          <button id="addTemplateBtn" title="Add Template">+</button>
+        </div>
+        <div class="sidebar-content" id="templateList"></div>
       </div>
-      <div class="sidebar-content" id="templateList"></div>
-    </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-header" data-toggle="archived">
-        <h3>Archived</h3>
+      <div class="sidebar-section">
+        <div class="sidebar-header" data-toggle="archived">
+          <h3>Archived</h3>
+        </div>
+        <div class="sidebar-content" id="archivedList"></div>
       </div>
-      <div class="sidebar-content" id="archivedList"></div>
+
+      <div class="sidebar-footer">
+        <!-- <button class="settings-button" id="settingsBtn">&#9881;</button> -->
+        <button class="settings-button" id="settingsBtn">⚙️</button>
+        <button id="exportBtn">Export</button>
+        <button id="importBtn">Import</button>
+      </div>
     </div>
 
-    <div class="sidebar-footer">
-      <button id="exportBtn">Export</button>
-      <button id="importBtn">Import</button>
-    </div>
-  </div>
-
-  <div class="main">
-    <div class="config-section" id="configSection">
-      <h2>Select an item</h2>
-      <p style="color: #555;">Click on a project, template, or archive entry.</p>
+    <div class="main">
+      <div class="config-section" id="configSection">
+      </div>
     </div>
   </div>
 </body>

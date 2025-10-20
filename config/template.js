@@ -104,6 +104,10 @@ export async function initTemplateView(templateId) {
     renderFileTree(fileTreeEl, currentTemplate.files, [currentTemplate.files.length - 1]);
   };
 
+  editorText.addEventListener("scroll", () => {
+    lineNumbers.scrollTop = editorText.scrollTop;
+  });  
+
   // Editor auto-save
   editorText.addEventListener("input", () => {
     if (currentFile) {
@@ -465,5 +469,5 @@ function openFile(file, el) {
 
 function updateLineNumbers(editorText, lineNumbers) {
   const lines = editorText.value.split("\n").length;
-  lineNumbers.textContent = Array.from({ length: lines }, (_, i) => i + 1).join("\n");
+  lineNumbers.textContent = Array.from({ length: lines + 5}, (_, i) => i + 1).join("\n");
 }

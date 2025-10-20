@@ -1,6 +1,6 @@
 # Overleaf Assistant
 
-**Version:** 1.9.2  
+**Version:** 1.9.3  
 **Chrome Manifest Version:** 3
 
 Overleaf Assistant is a Chrome extension designed to **streamline and enhance your Overleaf workflow**. It simplifies project management, template handling, and customizations while providing keyboard shortcuts and offline backup integration.
@@ -45,10 +45,10 @@ Our Approach: [Overleaf UI] → [Interceptor] → [Local Cache] → [Chrome Stor
              │
      [webRequest Intercept]
              │
-     ┌───────┴────────┐
-     │  Offline Mode   │
-     │ local-overleaf/ │
-     └───────┬────────┘
+     ┌────────┴─────────┐
+     │   Offline Mode   │
+     │  local-overleaf  │
+     └────────┬─────────┘
              │
    chrome.local.storage (project list)
              │
@@ -64,11 +64,13 @@ Our Approach: [Overleaf UI] → [Interceptor] → [Local Cache] → [Chrome Stor
 - Central hub for managing projects and template customizations.
 
 ### 5. Keyboard Shortcuts
-| Command            | Default (Windows/Linux)   | Default (Mac)           | Description                       |
-|-------------------|---------------------------|------------------------|-----------------------------------|
+| Command            | Default (Windows/Linux)   | Default (Mac)          | Description                       |
+|--------------------|---------------------------|------------------------|-----------------------------------|
 | `open-files`       | Ctrl + H                  | Command + H            | Toggle file tree visibility       |
-| `toggle-forward`   | Ctrl + Shift + Right      | Command + Shift + Right| Move to the next option           |
-| `toggle-backward`  | Ctrl + Shift + Left       | Command + Shift + Left | Move to the previous option       |
+| `toggle-editor`    | Ctrl + Shift + Right      | Meta + Ctrl + Right    | Change editor viewing option      |
+| `toggle-pdf`       | Ctrl + Shift + Left       | Meta + Ctrl + Left     | Change pdf viewing option         |
+| `editor-pdf`       | Ctrl + Shift + Up         | Meta + Ctrl + Up       | Change original viewing option    |
+| `new-tab-pdf`      | Ctrl + Shift + Down       | Meta + Ctrl + Down     | Change pdf in new tab viewing     |
 | `_execute_action`  | Ctrl + Shift + E          | Command + Shift + E    | Activate the extension            |
 
 ---
