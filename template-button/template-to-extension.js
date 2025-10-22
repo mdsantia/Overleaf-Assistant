@@ -20,10 +20,16 @@
         };
 
         if (!tryInsert()) {
-            const obs = new MutationObserver(() => {
-            if (tryInsert()) obs.disconnect();
+            let lastRun = 0;
+            const MIN_INTERVAL = 5000; // 5s
+
+            const observer = new MutationObserver(() => {
+                const now = Date.now();
+                if (now - lastRun < MIN_INTERVAL) return; // skip
+                lastRun = now;
+                if (tryInsert()) observer.disconnect();
             });
-            obs.observe(document.body, { childList: true, subtree: true });
+            observer.observe(document.body, { childList: true, subtree: true });
         }
     }
 
@@ -48,7 +54,13 @@
         const OGBUTTON = dropdown.querySelector("button")?.cloneNode(true);
         const button = updateContainer(dropdown);
 
+        let lastRun = 0;
+        const MIN_INTERVAL = 5000; // 5s
+
         const observer = new MutationObserver(() => {
+            const now = Date.now();
+            if (now - lastRun < MIN_INTERVAL) return; // skip
+            lastRun = now;
             dropdown.querySelector("button").style.cssText = OGBUTTON.style.cssText;
             updateContainer(dropdown);
         });

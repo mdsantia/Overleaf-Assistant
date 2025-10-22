@@ -87,7 +87,7 @@ export async function initProjectView(projectId, readOnly = false) {
 
       store[currentProjectId] = project;
       await chrome.storage.local.set({ [STORAGE_KEYS.projects]: store });
-      alert(`Variables for template "${currentOpenTemplateId}" saved.`);
+      alert(`Variables for template "${project.templates[currentOpenTemplateId].name}" saved.`);
     };
   }
 
