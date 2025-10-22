@@ -79,6 +79,14 @@ document.addEventListener("keydown", (e) => {
     return button;
   }  
 
+  function debounce(fn, delay) {
+    let timer = null;
+    return function (...args) {
+      clearTimeout(timer);
+      timer = setTimeout(() => fn(...args), delay);
+    };
+  }
+
   function displaceReview(container, toolbar) {
     const clonedContainer = container.cloneNode(true);
     clonedContainer.id = "CLONE";
@@ -100,17 +108,13 @@ document.addEventListener("keydown", (e) => {
     if (dropdown) {
       const OGBUTTON = dropdown.querySelector("button")?.cloneNode(true);
       const button = updateContainer(dropdown);
-      let lastRun = 0;
-      const MIN_INTERVAL = 5000; // 5s
 
-      const observer = new MutationObserver(() => {
-        const now = Date.now();
-        if (now - lastRun < MIN_INTERVAL) return; // skip
-        lastRun = now;
-
-        dropdown.querySelector("button").style.cssText = OGBUTTON.style.cssText;
-        updateContainer(dropdown);
-      });
+      const observer = new MutationObserver(
+        debounce(() => {
+          dropdown.querySelector("button").style.cssText = OGBUTTON.style.cssText;
+          updateContainer(dropdown);
+        }, 300)
+      );
   
       observer.observe(button, {
         attributes: true,
@@ -229,10 +233,10 @@ document.addEventListener("keydown", (e) => {
     const tryInsert = () => {
       const container = document.querySelector(
         "#panel-source-editor > div > div > div.cm-scroller > div.review-mode-switcher-container"
-        );
-        const toolbar = document.querySelector(
-          "#ol-cm-toolbar-wrapper > div.ol-cm-toolbar.toolbar-editor > div.ol-cm-toolbar-button-group.ol-cm-toolbar-end"
-          );
+      );
+      const toolbar = document.querySelector(
+        "#ol-cm-toolbar-wrapper > div.ol-cm-toolbar.toolbar-editor > div.ol-cm-toolbar-button-group.ol-cm-toolbar-end"
+      );
       if (toolbar && container) {
         createSaveIcon(projectId, isSavingEnabled);
         displaceReview(container, toolbar);
@@ -240,31 +244,39 @@ document.addEventListener("keydown", (e) => {
       }
       return false;
     };
-
-    if (!tryInsert()) {
-      let lastRun = 0;
-      const MIN_INTERVAL = 5000; // 5s
-
+  
+    const init = () => {
+      if (tryInsert()) return;
+  
       const observer = new MutationObserver(() => {
-        const now = Date.now();
-        if (now - lastRun < MIN_INTERVAL) return; // skip
-        lastRun = now;
-        console.log(`[Waiting] ${projectId}`);
-        if (tryInsert()) observer.disconnect();
+        if (tryInsert()) {
+          observer.disconnect();
+          console.log(`[Inserted] Save icon for project ${projectId}`);
+        }
       });
+  
       observer.observe(document.body, { childList: true, subtree: true });
+    };
+  
+    // Ensure document.body is ready
+    if (document.body) {
+      init();
+    } else {
+      // Defer until DOM is ready
+      window.addEventListener("DOMContentLoaded", init);
     }
   }
-
+  
   const projectId = getProjectIdFromUrl(window.location.href);
   if (projectId) {
     chrome.storage.local.get("configProjects", (data) => {
-      const projects = data.configProjects || {};   // fallback to empty object
+      const projects = data.configProjects || {};
       const project = projects[projectId];
       const isSavingEnabled = project ? project.localBackup : false;
       waitForToolbarAndInsertIcon(projectId, isSavingEnabled);
-    });    
+    });
   } else {
     console.error("[Overleaf Helper] No project ID detected");
   }
+  
 })();

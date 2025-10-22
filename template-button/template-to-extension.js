@@ -3,35 +3,51 @@
 // ==============================
 
 (() => {
+    function debounce(fn, delay) {
+        let timer = null;
+        return function (...args) {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn(...args), delay);
+        };
+      }
+
     function waitForToolbarAndInsertIcon(projectId, isSavingEnabled) {
         const tryInsert = () => {
-            const container = document.querySelector(
+          const container = document.querySelector(
             "#panel-source-editor > div > div > div.cm-scroller > div.review-mode-switcher-container"
-            );
-            const toolbar = document.querySelector(
-            "#ol-cm-toolbar-wrapper > div > div.ol-cm-toolbar-button-group.ol-cm-toolbar-end"
-            );
-            if (toolbar && container) {
+          );
+          const toolbar = document.querySelector(
+            "#ol-cm-toolbar-wrapper > div.ol-cm-toolbar.toolbar-editor > div.ol-cm-toolbar-button-group.ol-cm-toolbar-end"
+          );
+          if (toolbar && container) {
             createSaveIcon(projectId, isSavingEnabled);
             displaceReview(container, toolbar);
             return true;
-            }
-            return false;
+          }
+          return false;
         };
-
-        if (!tryInsert()) {
-            let lastRun = 0;
-            const MIN_INTERVAL = 5000; // 5s
-
-            const observer = new MutationObserver(() => {
-                const now = Date.now();
-                if (now - lastRun < MIN_INTERVAL) return; // skip
-                lastRun = now;
-                if (tryInsert()) observer.disconnect();
-            });
-            observer.observe(document.body, { childList: true, subtree: true });
+      
+        const init = () => {
+          if (tryInsert()) return;
+      
+          const observer = new MutationObserver(() => {
+            if (tryInsert()) {
+              observer.disconnect();
+              console.log(`[Inserted] Save icon for project ${projectId}`);
+            }
+          });
+      
+          observer.observe(document.body, { childList: true, subtree: true });
+        };
+      
+        // Ensure document.body is ready
+        if (document.body) {
+          init();
+        } else {
+          // Defer until DOM is ready
+          window.addEventListener("DOMContentLoaded", init);
         }
-    }
+      }
 
     function displaceReview(container, toolbar) {
         const clonedContainer = container.cloneNode(true);
@@ -54,16 +70,12 @@
         const OGBUTTON = dropdown.querySelector("button")?.cloneNode(true);
         const button = updateContainer(dropdown);
 
-        let lastRun = 0;
-        const MIN_INTERVAL = 5000; // 5s
-
-        const observer = new MutationObserver(() => {
-            const now = Date.now();
-            if (now - lastRun < MIN_INTERVAL) return; // skip
-            lastRun = now;
-            dropdown.querySelector("button").style.cssText = OGBUTTON.style.cssText;
-            updateContainer(dropdown);
-        });
+        const observer = new MutationObserver(
+            debounce(() => {
+              dropdown.querySelector("button").style.cssText = OGBUTTON.style.cssText;
+              updateContainer(dropdown);
+            }, 300)
+          );
 
         observer.observe(button, {
             attributes: true,
