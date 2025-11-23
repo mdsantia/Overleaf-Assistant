@@ -1,6 +1,6 @@
 {
   "name": "Overleaf Assistant",
-  "version": "1.9.3",
+  "version": "1.9.4",
   "manifest_version": 3,
   "permissions": [
     "storage",
@@ -31,7 +31,7 @@
     },
     {
       "matches": ["https://www.overleaf.com/latex/templates/*"],
-      "js": ["template-button/template-to-extension.js"],
+      "js": ["template-generation/template-to-extension.js"],
       "type": "module"
     }
   ],
@@ -47,22 +47,22 @@
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
-      "16": "icons/nbg-icon-16.png",
-      "48": "icons/nbg-icon-48.png",
-      "128": "icons/nbg-icon-128.png"
+      "16": "icons/small-icon-128.png",
+      "48": "icons/small-icon-128.png",
+      "128": "icons/small-icon-128.png"
     }
   },
   "icons": {
-    "16": "icons/nbg-icon-16.png",
-    "48": "icons/nbg-icon-48.png",
-    "128": "icons/nbg-icon-128.png"
+    "16": "icons/small-icon-128.png",
+    "48": "icons/small-icon-128.png",
+    "128": "icons/small-icon-128.png"
   },
   "web_accessible_resources": [
     {
       "resources": [
         "template-generation/overleafUploader.js",
+        "icons/download-icon-128.png",
         "icons/upload-icon-128.png",
-        "icons/nbg-icon-128.png",
         "cache/api-logger-main-world.js"
       ],
       "matches": [

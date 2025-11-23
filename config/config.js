@@ -9,6 +9,9 @@
 // - create new template and immediately open it
 //
 
+import downloadFilesAsZip from "../template-generation/downloadFilesAsZip.js";
+import unzipTemplate from "../template-generation/zipAsFiles.js";
+
 /////////////////////
 // storage helpers //
 /////////////////////
@@ -130,7 +133,7 @@ export async function renderTemplates(templateId) {
       template.name,
       "template",
       templateId,
-      null
+      async () => { await zipTemplate(template); }
     );
     templateListEl.appendChild(item);
   }
@@ -167,28 +170,19 @@ function createSidebarItem(name, type, id, onSecondary) {
   let secondaryBtn = null;
 
   if (type === "template") {
-    // DELETE button with double confirmation
+    // DOWNLOAD button (ZIP export)
     secondaryBtn = document.createElement("button");
-    secondaryBtn.textContent = "🗑️";
-    secondaryBtn.title = "Delete template";
+    // secondaryBtn.textContent = "⬇️";
+    secondaryBtn.style.backgroundImage = `url(${chrome.runtime.getURL('icons/download-icon-128.png')})`;
+    secondaryBtn.style.backgroundSize = 'contain';
+    secondaryBtn.style.backgroundRepeat = 'no-repeat';
+    secondaryBtn.style.backgroundPosition = 'center';
+    secondaryBtn.textContent = ''; // Remove text
+    secondaryBtn.title = "Download template as ZIP";
     secondaryBtn.style.marginLeft = "8px";
     secondaryBtn.addEventListener("click", async (e) => {
       e.stopPropagation();
-      if (!confirm("Are you sure you want to delete this template?")) return;
-      if (!confirm("Really delete? This cannot be undone!")) return;
-
-      const data = await storageGet("template");
-      const templates = data.template || {};
-      delete templates[id];
-      await storageSet({ template: templates });
-
-      if (activeSelection && activeSelection.type === "template" && activeSelection.id === id) {
-        window.location.href = chrome.runtime.getURL("/config/config.html");
-        return;
-      }
-      
-      e.stopPropagation();
-      await renderTemplates();
+      await onSecondary();
     });
   } else if (type === "archived") {
     // Unbox button
@@ -249,6 +243,41 @@ async function un_archiveProject(projectId, unarchive_bool) {
   await renderProjects();
   await updateSidebarActiveClasses();
 }
+
+//////////////////////////////
+//    ZIP TEMPLATE API      //
+//////////////////////////////
+async function zipTemplate(template) {
+  try {
+    // This WILL open the browser's local "Save file" dialog
+    await downloadFilesAsZip(
+      template.files,
+      template.name
+  );  
+  } catch (err) {
+    console.error("Failed to download ZIP:", err);
+  }
+}
+
+async function handleZipUpload(fileInput) {
+  const zipBlob = fileInput.files[0];
+
+  const templateFiles = await unzipTemplate(zipBlob);
+
+  console.log("Recovered template file tree:", templateFiles);
+
+  // Now insert into your template storage system:
+  await storageSet({
+    template: {
+      ...existingTemplates,
+      [newId]: {
+        name: "Imported Template",
+        files: templateFiles
+      }
+    }
+  });
+}
+
 
 /////////////////////////////
 // Import / Export (kept) //

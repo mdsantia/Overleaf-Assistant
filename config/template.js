@@ -41,6 +41,17 @@ export async function initTemplateView(templateId) {
   const addFolderBtn = document.getElementById("addFolderBtn");
   const addVarBtn = document.getElementById("addVarBtn");
 
+  // --- Delete Project ---
+  const deleteBtn = document.getElementById("deleteTemplateBtn");
+  if (deleteBtn) {
+    deleteBtn.onclick = async () => {
+      if (!confirm("Delete this template?")) return;
+      if (!confirm("Are you sure? This could alter templates saved in your projects.")) return;
+      await deleteTemplate();
+      window.location.href = "config.html";
+    };
+  }
+
   // Inline-edit template name
   titleEl.textContent = currentTemplate.name || "Untitled Template";
   titleEl.contentEditable = true;
@@ -130,6 +141,15 @@ async function saveTemplate() {
   const data = await storageGet("template");
   const templates = data.template || {};
   templates[currentTemplateId] = currentTemplate;
+  await storageSet({ template: templates });
+  await renderTemplates(); // refresh sidebar
+}
+
+async function deleteTemplate() {
+  if (!currentTemplateId) return;
+  const data = await storageGet("template");
+  const templates = data.template || {};
+  delete templates[currentTemplateId];
   await storageSet({ template: templates });
   await renderTemplates(); // refresh sidebar
 }

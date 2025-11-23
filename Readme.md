@@ -1,6 +1,6 @@
 # Overleaf Assistant
 
-**Version:** 1.9.3  
+**Version:** 1.9.4  
 **Chrome Manifest Version:** 3
 
 Overleaf Assistant is a Chrome extension designed to **streamline and enhance your Overleaf workflow**. It simplifies project management, template handling, and customizations while providing keyboard shortcuts and offline backup integration.
@@ -150,9 +150,15 @@ git commit -m "Update Overleaf submodule"
 
 ---
 
-<!-- ## License
+## License
 
-MIT License. See [LICENSE](LICENSE) for details. -->
+MIT License. See [LICENSE](LICENSE) for details.
+
+---
+
+## Acknowledgments
+
+Logo and some visual assets were generated with the assistance of **Microsoft Copilot**, while most troubleshooting was accomplished with the assistance of **Chat GPT**.
 
 ---
 
