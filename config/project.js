@@ -394,7 +394,7 @@ async function openTemplateVariables(templateId, project) {
     fileEditorContainer.innerHTML = `
       <div class="file-editor">
         <div class="file-editor-header" id="openFileName-${varName}">
-          ${varName}
+          ${varName}: The format to insert a variable is "\$[varName]/$"
         </div>
         <div id="editorWrapper-${varName}" style="position: relative;" class="editorWrapper">
           <pre id="lineNumbers-${varName}" class="file-line-numbers"></pre>

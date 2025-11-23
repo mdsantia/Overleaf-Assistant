@@ -164,6 +164,7 @@ html, body {
   
   .file-editor-header {
     padding: 10px;
+    color: white;
     background: var(--panel);
     font-weight: bold;
     display: flex;

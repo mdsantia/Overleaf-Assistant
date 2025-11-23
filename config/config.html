@@ -9,33 +9,34 @@
 <body>
   <div class="app">
     <div class="sidebar">
-      <div class="sidebar-section">
-        <div class="sidebar-header" data-toggle="projects">
-          <h3>Projects</h3>
-        </div>
-        <div class="sidebar-content" id="config-projectList"></div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-header" data-toggle="templates">
-          <h3>Templates</h3>
-          <button id="addTemplateBtn" title="Add Template">+</button>
-        </div>
-        <div class="sidebar-content" id="templateList"></div>
-      </div>
-
-      <div class="sidebar-section">
-        <div class="sidebar-header" data-toggle="archived">
-          <h3>Archived</h3>
-        </div>
-        <div class="sidebar-content" id="archivedList"></div>
-      </div>
-
-      <div class="sidebar-footer">
+      <div class="sidebar-head">
         <!-- <button class="settings-button" id="settingsBtn">&#9881;</button> -->
         <button class="settings-button" id="settingsBtn">⚙️</button>
         <button id="exportBtn">Export</button>
         <button id="importBtn">Import</button>
+      </div>
+      <div class="sidebar-scroll">
+        <div class="sidebar-section">
+          <div class="sidebar-header" data-toggle="projects">
+            <h3>Projects</h3>
+          </div>
+          <div class="sidebar-content" id="config-projectList"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-header" data-toggle="templates">
+            <h3>Templates</h3>
+            <button id="addTemplateBtn" title="Add Template">+</button>
+          </div>
+          <div class="sidebar-content" id="templateList"></div>
+        </div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-header" data-toggle="archived">
+            <h3>Archived</h3>
+          </div>
+          <div class="sidebar-content" id="archivedList"></div>
+        </div>
       </div>
     </div>
 
