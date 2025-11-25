@@ -306,7 +306,7 @@ function createFileNodeElement(node, parentArray, index, isNew = false) {
     // If this is the current file, update editor header
     if (node === currentFile) {
       const editorHeader = document.getElementById("openFileName");
-      editorHeader.innerText = currentFile.name + ": The format to insert a variable is \"\\$[varName]/$\"";
+      editorHeader.innerText = currentFile.name + ": The format to insert a variable is \"$\\[varname]/$\"";
     }
   });
 
@@ -480,7 +480,7 @@ function openFile(file, el) {
   editorText.value = file.content || "";
   updateLineNumbers(editorText, lineNumbers);
 
-  editorHeader.innerText = file.name + ": The format to insert a variable is \"\\$[varName]/$\"";
+  editorHeader.innerText = file.name + ": The format to insert a variable is \"$\\[varname]/$\"";
 
   document.querySelectorAll(".file-node").forEach((f) => f.classList.remove("active"));
   el.classList.add("active");

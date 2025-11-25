@@ -9,38 +9,50 @@
 <body>
   <div class="subapp">
     <!-- Sidebar with filetree -->
-    <div class="sidebar">
+    <div class="subsidebar">
+  
+      <!-- Top fixed section -->
       <div class="sidebar-header">
         <span class="editable-title" id="templateTitle" contenteditable="true">
           Untitled Template
         </span>
       </div>
-      <div id="fileTree" class="file-tree"></div>
-      <div id="variableListContainer">
-        <div id="variableListHeader" class="folder-header">
-          <button id="toggleVarListBtn" class="arrow">▼</button>
-          Variables
+    
+      <!-- Scroll region that MUST shrink before hitting footer -->
+      <div id="middleScrollable">
+        <div class="subsidebar-scroll filetree-scroll">
+          <div id="fileTree" class="file-tree"></div>
         </div>
-        <div id="variableList" class="collapsed"></div>
+    
+        <div id="variableListOuter">
+          <div id="variableListHeader" class="folder-header">
+            <button id="toggleVarListBtn" class="arrow">▼</button>
+            Variables
+          </div>
+          <div id="variableListScroll">
+            <div id="variableList"></div>
+          </div>
+        </div>
       </div>
-      <div class="sidebar-footer">
+    
+      <!-- Footer fixed to bottom -->
+      <div class="subsidebar-footer">
         <button id="addFolderBtn">+ Folder</button>
         <button id="addFileBtn">+ File</button>
-        <button id="addVarBtn" style="background:rgb(0, 153, 68);color:#fff;">
-          + Var
-        </button>
+        <button id="addVarBtn" style="background:rgb(0,153,68);color:#fff;">+ Var</button>
       </div>
-      <!-- Delete Template -->
+    
       <section class="config-section-card danger-zone">
         <h2>Danger Zone</h2>
-        <button id="deleteTemplateBtn" class="delete-btn" width="100%">Delete Template</button>
+        <button id="deleteTemplateBtn" class="delete-btn">Delete Template</button>
       </section>
+    
     </div>
 
     <!-- Main editor pane -->
     <div class="file-editor">
       <div class="file-editor-header" id="openFileName">
-        No file opened: The format to insert a variable is "\$[varName]/$"
+        No file opened: The format to insert a variable is "$\[varname]/$"
       </div>
       <div id="editorWrapper" style="position: relative;" class="editorWrapper">
         <pre id="lineNumbers"></pre>

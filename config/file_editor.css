@@ -42,6 +42,62 @@ html, body {
     font-size: 14px;
   }
   
+  .subsidebar {
+    display: flex;
+    flex-direction: column;
+    height: 90vh;
+    overflow: hidden;  /* Important */
+  }
+  
+  /* Scroll region between header and footer */
+  #middleScrollable {
+    flex: 1 1 auto;
+    min-height: 0;      /* Critical */
+    display: flex;
+    flex-direction: column;
+  }
+  
+  /* File tree scroll */
+  .filetree-scroll {
+    flex: 1 1 auto;   /* ⭐ expandable */
+    min-height: 0;    /* ⭐ allows scrolling */
+    overflow-y: auto;
+    transition: flex 0.2s ease;
+  }
+  
+  /* Variable list region */
+  #variableListOuter {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    min-height: 0%;        /* Critical */
+    max-height: 40%;
+  }
+
+  #variableListOuter.collapsed {
+    flex: 0 0 auto;      /* ⭐ shrink to only its header */
+    overflow: hidden;
+  }  
+  
+  /* Variable header is fixed */
+  #variableListHeader {
+    flex: 0 0 auto;
+  }
+  
+  /* VARIABLES NOW SCROLL UNTIL THEY HIT FOOTER */
+  #variableListScroll {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    min-height: 0;        /* Critical */
+  }
+  
+  /* Footer stays fixed */
+  .subsidebar-footer,
+  .danger-zone {
+    padding: 0 0 0 0;
+    flex: 0 0 auto;
+  }
+
   .folder-header,
   .file-node {
     display: flex;
